@@ -152,14 +152,14 @@ export function Header() {
             
             <form onSubmit={handleSearch} className="relative flex-1 ">
               <div className="relative ">
-                <Search className="absolute left-3 top-1/3 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                 <Input 
                   placeholder={t("search")} 
                   className="pl-10 pr-20 h-10 rounded-full border-primary focus:border-primary focus:ring-2 focus:ring-primary/20" 
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
-                <div className="absolute right-2 top-1/6 transform -translate-y-1/2 flex items-center justify-center space-x-1">
+                <div className="absolute right-2 top-1/3 transform -translate-y-1/2 flex items-center justify-center space-x-1">
                   <Button
                     type="button"
                     variant="ghost"
