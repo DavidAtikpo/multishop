@@ -3,9 +3,7 @@ import type { Metadata } from "next"
 import { GeistSans } from "geist/font/sans"
 import { GeistMono } from "geist/font/mono"
 import { Analytics } from "@vercel/analytics/next"
-import { LanguageProvider } from "@/hooks/use-language"
-import { CartProvider } from "@/hooks/use-cart"
-import { LanguageHtml } from "@/components/language-html"
+import { Providers } from "@/components/providers"
 import { Suspense } from "react"
 import "./globals.css"
 
@@ -21,14 +19,10 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html>
-      <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
+    <html suppressHydrationWarning>
+      <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`} suppressHydrationWarning>
         <Suspense fallback={<div>Loading...</div>}>
-          <LanguageProvider>
-            <LanguageHtml>
-              <CartProvider>{children}</CartProvider>
-            </LanguageHtml>
-          </LanguageProvider>
+          <Providers>{children}</Providers>
         </Suspense>
         <Analytics />
       </body>

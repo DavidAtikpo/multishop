@@ -24,6 +24,11 @@ export const translations = {
       heroTitle: "Découvrez notre sélection de produits de qualité",
       heroSubtitle: "Des produits variés pour tous vos besoins : bois, vélos, sacs, ordinateurs et téléphones",
       shopNow: "Acheter maintenant",
+      discoverProducts: "Découvrir les produits",
+      premiumQuality: "Produits de qualité premium",
+      freeShipping: "Livraison gratuite",
+      warranty: "Garantie 2 ans",
+      fastShipping: "Expédition rapide",
   
       // Product info
       price: "Prix",
@@ -53,6 +58,9 @@ export const translations = {
       signUp: "S'inscrire",
       settings: "Paramètres",
       signOut: "Se déconnecter",
+
+      // Shipping Banner
+      shippingBanner: "🚚 Livraison gratuite en Europe (France, Belgique, Suisse, Allemagne, Espagne) - Délai: 2-3 jours",
     },
     en: {
       // Navigation
@@ -79,6 +87,11 @@ export const translations = {
       heroTitle: "Discover our selection of quality products",
       heroSubtitle: "Varied products for all your needs: wood, bikes, bags, computers and phones",
       shopNow: "Shop Now",
+      discoverProducts: "Discover products",
+      premiumQuality: "Premium quality products",
+      freeShipping: "Free shipping",
+      warranty: "2 year warranty",
+      fastShipping: "Fast shipping",
   
       // Product info
       price: "Price",
@@ -108,6 +121,9 @@ export const translations = {
       signUp: "Sign Up",
       settings: "Settings",
       signOut: "Sign Out",
+
+      // Shipping Banner
+      shippingBanner: "🚚 Free shipping in Europe (France, Belgium, Switzerland, Germany, Spain) - Delivery: 2-3 days",
     },
     de: {
       // Navigation
@@ -134,6 +150,11 @@ export const translations = {
       heroTitle: "Entdecken Sie unsere Auswahl an Qualitätsprodukten",
       heroSubtitle: "Vielfältige Produkte für alle Ihre Bedürfnisse: Holz, Fahrräder, Taschen, Computer und Telefone",
       shopNow: "Jetzt einkaufen",
+      discoverProducts: "Produkte entdecken",
+      premiumQuality: "Premium-Qualitätsprodukte",
+      freeShipping: "Kostenloser Versand",
+      warranty: "2 Jahre Garantie",
+      fastShipping: "Schneller Versand",
   
       // Product info
       price: "Preis",
@@ -163,6 +184,9 @@ export const translations = {
       signUp: "Registrieren",
       settings: "Einstellungen",
       signOut: "Abmelden",
+
+      // Shipping Banner
+      shippingBanner: "🚚 Kostenloser Versand in Europa (Frankreich, Belgien, Schweiz, Deutschland, Spanien) - Lieferzeit: 2-3 Tage",
     },
     es: {
       // Navigation
@@ -189,6 +213,11 @@ export const translations = {
       heroTitle: "Descubre nuestra selección de productos de calidad",
       heroSubtitle: "Productos variados para todas tus necesidades: madera, bicicletas, bolsos, ordenadores y teléfonos",
       shopNow: "Comprar ahora",
+      discoverProducts: "Descubrir productos",
+      premiumQuality: "Productos de calidad premium",
+      freeShipping: "Envío gratuito",
+      warranty: "Garantía de 2 años",
+      fastShipping: "Envío rápido",
   
       // Product info
       price: "Precio",
@@ -218,6 +247,9 @@ export const translations = {
       signUp: "Registrarse",
       settings: "Configuración",
       signOut: "Cerrar sesión",
+
+      // Shipping Banner
+      shippingBanner: "🚚 Envío gratuito en Europa (Francia, Bélgica, Suiza, Alemania, España) - Entrega: 2-3 días",
     },
   } as const
   

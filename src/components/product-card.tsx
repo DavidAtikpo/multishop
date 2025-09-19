@@ -3,10 +3,11 @@
 import { useLanguage } from "@/hooks/use-language"
 import { useCart, type Product } from "@/hooks/use-cart"
 import { Button } from "../components/ui/button"
-import { Card, CardContent, CardFooter } from "@/components/ui/card"
+import { Card, CardContent, CardFooter } from "../components/ui/card"
 import { Badge } from "../components/ui/badge"
-import { Star, ShoppingCart } from "lucide-react"
+import { Star, ShoppingCart, Eye } from "lucide-react"
 import Image from "next/image"
+import Link from "next/link"
 
 interface ProductCardProps {
   product: Product
@@ -37,6 +38,7 @@ export function ProductCard({ product }: ProductCardProps) {
               {t("outOfStock")}
             </Badge>
           )}
+          <Link href={`/products/${product.id}`} className="absolute inset-0 z-10" />
         </div>
 
         <h3 className="font-semibold text-lg mb-2 line-clamp-2">{product.name}</h3>
@@ -65,11 +67,16 @@ export function ProductCard({ product }: ProductCardProps) {
         </div>
       </CardContent>
 
-      <CardFooter className="p-4 pt-0">
-        <Button onClick={handleAddToCart} disabled={!product.inStock} className="w-full gap-2">
+      <CardFooter className="p-4 pt-0 space-x-2">
+        <Button onClick={handleAddToCart} disabled={!product.inStock} className="flex-1 gap-2">
           <ShoppingCart className="h-4 w-4" />
           {t("addToCart")}
         </Button>
+        <Link href={`/products/${product.id}`}>
+          <Button variant="outline" size="sm">
+            <Eye className="h-4 w-4" />
+          </Button>
+        </Link>
       </CardFooter>
     </Card>
   )
