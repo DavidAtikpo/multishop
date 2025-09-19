@@ -10,7 +10,9 @@ import "./globals.css"
 export const metadata: Metadata = {
   title: "MultiShop - Boutique en ligne multilingue",
   description: "Découvrez notre sélection de produits de qualité : bois, vélos, sacs, ordinateurs et téléphones",
-  generator: "v0.app",
+  icons: {
+    icon: "/logo.jpg",
+  },
 }
 
 export default function RootLayout({
