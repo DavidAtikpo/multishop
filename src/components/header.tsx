@@ -159,7 +159,7 @@ export function Header() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
-                <div className="absolute right-2 top-1/3 transform -translate-y-1/2 flex items-center justify-center space-x-1">
+                <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center justify-center space-x-1">
                   <Button
                     type="button"
                     variant="ghost"
