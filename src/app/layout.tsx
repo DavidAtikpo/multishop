@@ -23,9 +23,7 @@ export default function RootLayout({
   return (
     <html suppressHydrationWarning>
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`} suppressHydrationWarning>
-        <Suspense fallback={<div>Loading...</div>}>
-          <Providers>{children}</Providers>
-        </Suspense>
+        <Providers>{children}</Providers>
         <Analytics />
       </body>
     </html>

@@ -20,4 +20,3 @@ export function LanguageHtml({ children }: { children: React.ReactNode }) {
 
   return <>{children}</>
 }
-

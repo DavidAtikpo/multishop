@@ -28,10 +28,17 @@ export function ProductCard({ product }: ProductCardProps) {
       <CardContent className="p-4">
         <div className="relative aspect-square mb-4 overflow-hidden rounded-md">
           <Image
-            src={product.image || "/placeholder.svg"}
+            src={
+              (product.images && product.images.length > 0) 
+                ? product.images[0] 
+                : product.image || "/placeholder.svg"
+            }
             alt={product.name}
             fill
             className="object-cover group-hover:scale-105 transition-transform duration-300"
+            onError={(e) => {
+              e.currentTarget.src = "/placeholder.svg"
+            }}
           />
           {!product.inStock && (
             <Badge variant="destructive" className="absolute top-2 right-2">

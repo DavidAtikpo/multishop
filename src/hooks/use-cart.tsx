@@ -7,6 +7,7 @@ export interface Product {
   name: string
   price: number
   image: string | null
+  images?: string[]
   category: string
   inStock: boolean
   rating: number

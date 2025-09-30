@@ -5,12 +5,11 @@ import { useParams } from "next/navigation"
 import { useLanguage } from "@/hooks/use-language"
 import { useCart } from "@/hooks/use-cart"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Star, ShoppingCart, ArrowLeft } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import { prisma } from "@/lib/prisma"
+import { WhatsAppChat } from "@/components/whatsapp-chat"
 
 interface Product {
   id: string
@@ -97,12 +96,7 @@ export default function ProductDetailPage() {
           {/* Product Images */}
           <div className="space-y-4">
             <div className="aspect-square relative overflow-hidden rounded-lg bg-white">
-              <Image
-                src={product.image || "/placeholder.svg"}
-                alt={product.name}
-                fill
-                className="object-cover"
-              />
+              <Image src={product.image || "/placeholder.svg"} alt={product.name} fill className="object-cover" />
             </div>
           </div>
 
@@ -142,12 +136,7 @@ export default function ProductDetailPage() {
             )}
 
             <div className="flex gap-4">
-              <Button
-                onClick={handleAddToCart}
-                disabled={!product.inStock}
-                className="flex-1 gap-2"
-                size="lg"
-              >
+              <Button onClick={handleAddToCart} disabled={!product.inStock} className="flex-1 gap-2" size="lg">
                 <ShoppingCart className="h-4 w-4" />
                 {t("addToCart")}
               </Button>
@@ -172,6 +161,12 @@ export default function ProductDetailPage() {
           </div>
         </div>
       </div>
+
+      <WhatsAppChat
+        defaultMessage={`Bonjour, j'aimerais avoir plus d'informations sur le produit "${product.name}".`}
+        productName={product.name}
+        productUrl={typeof window !== "undefined" ? window.location.href : ""}
+      />
     </div>
   )
 }

@@ -48,21 +48,24 @@ const countryToLanguage: Record<string, Language> = {
 }
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [language, setLanguage] = useState<Language>("en")
-  const [isDetecting, setIsDetecting] = useState(true)
+  const [language, setLanguage] = useState<Language>("fr") // Langue par défaut en français
+  const [isDetecting, setIsDetecting] = useState(false)
   const [isClient, setIsClient] = useState(false)
   const [lastDetectedCountry, setLastDetectedCountry] = useState<string | null>(null)
 
   // S'assurer que nous sommes côté client
   useEffect(() => {
     setIsClient(true)
+    setIsDetecting(true)
   }, [])
 
   // Fonction de détection de langue
   const detectLanguage = async (forceUpdate = false) => {
+    if (!isClient) return // Ne pas exécuter côté serveur
+    
     try {
       // 1. Vérifier d'abord le localStorage (sauf si forceUpdate)
-      if (!forceUpdate) {
+      if (!forceUpdate && typeof window !== 'undefined') {
         const savedLanguage = localStorage.getItem("language") as Language
         if (savedLanguage && savedLanguage in translations) {
           setLanguage(savedLanguage)
@@ -86,7 +89,9 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
             setLanguage(detectedLanguage)
             setIsDetecting(false)
             // Sauvegarder la nouvelle langue détectée
-            localStorage.setItem("language", detectedLanguage)
+            if (typeof window !== 'undefined') {
+              localStorage.setItem("language", detectedLanguage)
+            }
             console.log(`🌍 Position détectée: ${currentCountry} → Langue: ${detectedLanguage}`)
             return
           }
@@ -96,21 +101,23 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       }
 
       // 3. Détecter la langue du navigateur
-      const browserLanguage = navigator.language.split('-')[0]
-      const supportedLanguages: Language[] = ['fr', 'en', 'de', 'es']
-      
-      if (supportedLanguages.includes(browserLanguage as Language)) {
-        setLanguage(browserLanguage as Language)
-        setIsDetecting(false)
-        return
+      if (typeof window !== 'undefined' && navigator.language) {
+        const browserLanguage = navigator.language.split('-')[0]
+        const supportedLanguages: Language[] = ['fr', 'en', 'de', 'es']
+        
+        if (supportedLanguages.includes(browserLanguage as Language)) {
+          setLanguage(browserLanguage as Language)
+          setIsDetecting(false)
+          return
+        }
       }
 
-      // 4. Fallback sur l'anglais
-      setLanguage("en")
+      // 4. Fallback sur le français (langue par défaut)
+      setLanguage("fr")
       setIsDetecting(false)
     } catch (error) {
       console.log('Erreur lors de la détection de langue:', error)
-      setLanguage("en")
+      setLanguage("fr")
       setIsDetecting(false)
     }
   }
@@ -154,7 +161,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   }, [isClient, lastDetectedCountry])
 
   useEffect(() => {
-    if (!isDetecting) {
+    if (!isDetecting && typeof window !== 'undefined') {
       localStorage.setItem("language", language)
     }
   }, [language, isDetecting])

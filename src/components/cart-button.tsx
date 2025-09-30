@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { ShoppingCart, Trash2, Plus, Minus } from "lucide-react"
 import Image from "next/image"
+import Link from "next/link"
 
 export function CartButton() {
   const { totalItems, items, removeFromCart, updateQuantity, totalPrice } = useCart()
@@ -30,21 +31,14 @@ export function CartButton() {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-80">
         {items.length === 0 ? (
-          <div className="p-4 text-center text-muted-foreground">
-            {t("cartEmpty")}
-          </div>
+          <div className="p-4 text-center text-muted-foreground">{t("cartEmpty")}</div>
         ) : (
           <div className="p-4">
             <div className="space-y-4">
               {items.map((item) => (
                 <div key={item.id} className="flex items-center space-x-3">
                   <div className="relative h-12 w-12 rounded-md overflow-hidden">
-                    <Image
-                      src={item.image || "/placeholder.svg"}
-                      alt={item.name}
-                      fill
-                      className="object-cover"
-                    />
+                    <Image src={item.image || "/placeholder.svg"} alt={item.name} fill className="object-cover" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <h4 className="text-sm font-medium truncate">{item.name}</h4>
@@ -85,8 +79,8 @@ export function CartButton() {
                 <span className="font-medium">{t("total")}:</span>
                 <span className="font-bold">€{totalPrice.toFixed(2)}</span>
               </div>
-              <Button className="w-full">
-                {t("checkout")}
+              <Button className="w-full" asChild>
+                <Link href="/checkout">{t("checkout")}</Link>
               </Button>
             </div>
           </div>
