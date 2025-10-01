@@ -32,6 +32,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Créer la commande
+    // Try infer vendor from first item's product
+    let vendorId: string | null = null
+    if (Array.isArray(items) && items.length > 0) {
+      const firstProduct = await prisma.product.findUnique({
+        where: { id: items[0].productId },
+        select: { vendorId: true },
+      })
+      vendorId = firstProduct?.vendorId || null
+    }
+
     const orderData: any = {
       shippingAddress: `${customerInfo.address}, ${customerInfo.city}, ${customerInfo.postalCode}, ${customerInfo.country}`,
       total: totalAmount,
@@ -45,6 +55,7 @@ export async function POST(request: NextRequest) {
         })),
       },
       ...(userId ? { user: { connect: { id: userId } } } : {}),
+      ...(vendorId ? { vendor: { connect: { id: vendorId } } } : {}),
     }
 
     const order = await prisma.order.create({

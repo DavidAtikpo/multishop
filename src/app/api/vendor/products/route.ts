@@ -59,6 +59,7 @@ export async function GET(request: NextRequest) {
           tags: true,
           quantity: true,
           views: true,
+          vendorId: true,
           createdAt: true,
           updatedAt: true,
         },

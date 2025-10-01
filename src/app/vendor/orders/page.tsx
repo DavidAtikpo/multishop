@@ -10,14 +10,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
 import { Eye, Package, Truck, CheckCircle, XCircle, ArrowLeft } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 import Link from "next/link"
@@ -26,10 +18,10 @@ interface OrderItem {
   id: string
   quantity: number
   price: number
-  product: {
+  product?: {
     id: string
     name: string
-    image: string
+    image: string | null
   }
 }
 
@@ -53,10 +45,8 @@ export default function VendorOrdersPage() {
   const { data: session, status } = useSession()
   const [orders, setOrders] = useState<Order[]>([])
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([])
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [searchTerm, setSearchTerm] = useState("")
-  const [trackingNumber, setTrackingNumber] = useState("")
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -126,9 +116,6 @@ export default function VendorOrdersPage() {
           description: "Statut de la commande mis à jour",
         })
         fetchOrders()
-        if (selectedOrder && selectedOrder.id === orderId) {
-          setSelectedOrder({ ...selectedOrder, status })
-        }
       } else {
         throw new Error("Erreur lors de la mise à jour du statut")
       }
@@ -141,46 +128,6 @@ export default function VendorOrdersPage() {
     }
   }
 
-  const handleAddTrackingNumber = async (orderId: string) => {
-    if (!trackingNumber.trim()) {
-      toast({
-        title: "Erreur",
-        description: "Veuillez saisir un numéro de suivi",
-        variant: "destructive",
-      })
-      return
-    }
-
-    try {
-      const response = await fetch(`/api/vendor/orders/${orderId}/tracking`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ trackingNumber }),
-      })
-
-      if (response.ok) {
-        toast({
-          title: "Succès",
-          description: "Numéro de suivi ajouté",
-        })
-        setTrackingNumber("")
-        fetchOrders()
-        if (selectedOrder && selectedOrder.id === orderId) {
-          setSelectedOrder({ ...selectedOrder, trackingNumber })
-        }
-      } else {
-        throw new Error("Erreur lors de l'ajout du numéro de suivi")
-      }
-    } catch (error) {
-      toast({
-        title: "Erreur",
-        description: "Impossible d'ajouter le numéro de suivi",
-        variant: "destructive",
-      })
-    }
-  }
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -337,145 +284,11 @@ export default function VendorOrdersPage() {
                   </TableCell>
                   <TableCell>
                     <div className="flex space-x-2">
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button variant="outline" size="sm" onClick={() => setSelectedOrder(order)}>
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-4xl">
-                          <DialogHeader>
-                            <DialogTitle>Détails de la commande #{order.id.slice(-8)}</DialogTitle>
-                            <DialogDescription>
-                              Commande passée le {new Date(order.createdAt).toLocaleDateString()}
-                            </DialogDescription>
-                          </DialogHeader>
-                          {selectedOrder && (
-                            <div className="space-y-6">
-                              {/* Customer Info */}
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <Card>
-                                  <CardHeader>
-                                    <CardTitle className="text-lg">Informations client</CardTitle>
-                                  </CardHeader>
-                                  <CardContent>
-                                    <div className="space-y-2">
-                                      <div>
-                                        <span className="font-medium">Nom:</span> {selectedOrder.user.name}
-                                      </div>
-                                      <div>
-                                        <span className="font-medium">Email:</span> {selectedOrder.user.email}
-                                      </div>
-                                      <div>
-                                        <span className="font-medium">Adresse de livraison:</span>{" "}
-                                        {selectedOrder.shippingAddress || "Non spécifiée"}
-                                      </div>
-                                      <div>
-                                        <span className="font-medium">Mode de paiement:</span>{" "}
-                                        {selectedOrder.paymentMethod || "Non spécifié"}
-                                      </div>
-                                    </div>
-                                  </CardContent>
-                                </Card>
-
-                                <Card>
-                                  <CardHeader>
-                                    <CardTitle className="text-lg">Statut et suivi</CardTitle>
-                                  </CardHeader>
-                                  <CardContent>
-                                    <div className="space-y-4">
-                                      <div className="flex items-center space-x-2">
-                                        {getStatusIcon(selectedOrder.status)}
-                                        <Badge variant={getStatusBadgeVariant(selectedOrder.status)}>
-                                          {getStatusLabel(selectedOrder.status)}
-                                        </Badge>
-                                      </div>
-                                      <div>
-                                        <Label htmlFor="status-update">Changer le statut</Label>
-                                        <Select
-                                          value={selectedOrder.status}
-                                          onValueChange={(value) => handleUpdateOrderStatus(selectedOrder.id, value)}
-                                        >
-                                          <SelectTrigger>
-                                            <SelectValue />
-                                          </SelectTrigger>
-                                          <SelectContent>
-                                            <SelectItem value="PENDING">En attente</SelectItem>
-                                            <SelectItem value="PROCESSING">En cours</SelectItem>
-                                            <SelectItem value="SHIPPED">Expédié</SelectItem>
-                                            <SelectItem value="DELIVERED">Livré</SelectItem>
-                                            <SelectItem value="CANCELLED">Annulé</SelectItem>
-                                          </SelectContent>
-                                        </Select>
-                                      </div>
-                                      <div>
-                                        <Label htmlFor="tracking">Numéro de suivi</Label>
-                                        <div className="flex space-x-2">
-                                          <Input
-                                            id="tracking"
-                                            placeholder="Entrez le numéro de suivi"
-                                            value={trackingNumber}
-                                            onChange={(e) => setTrackingNumber(e.target.value)}
-                                          />
-                                          <Button onClick={() => handleAddTrackingNumber(selectedOrder.id)} size="sm">
-                                            Ajouter
-                                          </Button>
-                                        </div>
-                                        {selectedOrder.trackingNumber && (
-                                          <p className="text-sm text-muted-foreground mt-1">
-                                            Actuel: {selectedOrder.trackingNumber}
-                                          </p>
-                                        )}
-                                      </div>
-                                    </div>
-                                  </CardContent>
-                                </Card>
-                              </div>
-
-                              {/* Order Items */}
-                              <Card>
-                                <CardHeader>
-                                  <CardTitle className="text-lg">Articles commandés</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                  <Table>
-                                    <TableHeader>
-                                      <TableRow>
-                                        <TableHead>Produit</TableHead>
-                                        <TableHead>Quantité</TableHead>
-                                        <TableHead>Prix unitaire</TableHead>
-                                        <TableHead>Total</TableHead>
-                                      </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                      {selectedOrder.items.map((item) => (
-                                        <TableRow key={item.id}>
-                                          <TableCell>
-                                            <div className="flex items-center space-x-3">
-                                              <img
-                                                src={item.product.image || "/placeholder.svg"}
-                                                alt={item.product.name}
-                                                className="w-12 h-12 object-cover rounded"
-                                              />
-                                              <span className="font-medium">{item.product.name}</span>
-                                            </div>
-                                          </TableCell>
-                                          <TableCell>{item.quantity}</TableCell>
-                                          <TableCell>{item.price.toFixed(2)} €</TableCell>
-                                          <TableCell>{(item.quantity * item.price).toFixed(2)} €</TableCell>
-                                        </TableRow>
-                                      ))}
-                                    </TableBody>
-                                  </Table>
-                                  <div className="mt-4 text-right">
-                                    <div className="text-lg font-bold">Total: {selectedOrder.total.toFixed(2)} €</div>
-                                  </div>
-                                </CardContent>
-                              </Card>
-                            </div>
-                          )}
-                        </DialogContent>
-                      </Dialog>
+                      <Link href={`/vendor/orders/${order.id}`}>
+                        <Button variant="outline" size="sm">
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </Link>
                       <Select value={order.status} onValueChange={(value) => handleUpdateOrderStatus(order.id, value)}>
                         <SelectTrigger className="w-32">
                           <SelectValue />

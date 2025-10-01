@@ -66,12 +66,12 @@ export default function ProductDetailPage() {
           const recent = JSON.parse(localStorage.getItem('recentProducts') || '[]')
           const updatedRecent = [data, ...recent.filter((p: Product) => p.id !== data.id)].slice(0, 4)
           localStorage.setItem('recentProducts', JSON.stringify(updatedRecent))
-          setRecentProducts(updatedRecent.slice(1)) // Exclure le produit actuel
+          setRecentProducts(updatedRecent.slice(1))
           
           // Charger les produits similaires depuis les données locales
           const similarProducts = products
             .filter(p => p.category === data.category && p.id !== data.id)
-            .slice(0, 4)
+            .slice(0, 6)
           setSimilarProducts(similarProducts)
         }
       } catch (error) {
@@ -86,15 +86,13 @@ export default function ProductDetailPage() {
     }
   }, [params.id])
 
-  // Charger les produits récents au montage
   useEffect(() => {
     const recent = JSON.parse(localStorage.getItem('recentProducts') || '[]')
     if (recent.length === 0) {
-      // Si pas de produits récents, afficher quelques produits aléatoires
-      const randomProducts = products.slice(0, 3)
+      const randomProducts = products.slice(0, 6)
       setRecentProducts(randomProducts)
     } else {
-      setRecentProducts(recent.slice(0, 3))
+      setRecentProducts(recent.slice(0, 6))
     }
   }, [])
 
@@ -157,7 +155,6 @@ export default function ProductDetailPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
-      {/* Header avec breadcrumb */}
       <Header />
       <div className="bg-white border-b sticky top-0 z-10 shadow-sm">
         <div className="container mx-auto px-4 py-4">
@@ -203,7 +200,6 @@ export default function ProductDetailPage() {
               )}
             </div>
             
-            {/* Miniatures */}
             <div className="grid grid-cols-3 gap-1.5 md:gap-2">
               {productImages.map((img, idx) => (
                 <button
@@ -260,7 +256,6 @@ export default function ProductDetailPage() {
               </Badge>
             </div>
 
-            {/* Quantité et actions */}
             <Card className="p-3 md:p-4 bg-gradient-to-br from-blue-50 to-indigo-50 border-2">
               <div className="space-y-3">
                 <div>
@@ -270,16 +265,16 @@ export default function ProductDetailPage() {
                       variant="outline" 
                       size="icon"
                       onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                      className="h-9 w-9"
+                      className="h-7 w-7 sm:h-9 sm:w-9 text-sm"
                     >
                       -
                     </Button>
-                    <span className="text-lg font-bold w-12 text-center">{quantity}</span>
+                    <span className="text-base sm:text-lg font-bold w-8 sm:w-12 text-center">{quantity}</span>
                     <Button 
                       variant="outline" 
                       size="icon"
                       onClick={() => setQuantity(quantity + 1)}
-                      className="h-9 w-9"
+                      className="h-7 w-7 sm:h-9 sm:w-9 text-sm"
                     >
                       +
                     </Button>
@@ -290,15 +285,15 @@ export default function ProductDetailPage() {
                   <Button 
                     onClick={handleAddToCart} 
                     disabled={!product.inStock} 
-                    className="flex-1 gap-2 h-10 text-sm font-semibold shadow-md hover:shadow-lg transition-all" 
+                    className="flex-1 gap-2 h-8 sm:h-10 text-xs sm:text-sm font-semibold shadow-md hover:shadow-lg transition-all" 
                   >
-                    <ShoppingCart className="h-4 w-4" />
+                    <ShoppingCart className="h-3 w-3 sm:h-4 sm:w-4" />
                     Ajouter au panier
                   </Button>
                   <Button 
                     variant="default" 
                     disabled={!product.inStock}
-                    className="h-10 px-6 bg-green-600 hover:bg-green-700 shadow-md text-sm"
+                    className="h-8 sm:h-10 px-3 sm:px-6 bg-green-600 hover:bg-green-700 shadow-md text-xs sm:text-sm"
                   >
                     Acheter
                   </Button>
@@ -306,25 +301,24 @@ export default function ProductDetailPage() {
               </div>
             </Card>
 
-            {/* Avantages */}
-            <div className="grid grid-cols-2 gap-1.5 md:gap-2">
-              <Card className="p-2 md:p-3 hover:shadow-md transition-shadow">
-                <Truck className="h-5 w-5 text-blue-600 mb-1" />
+            <div className="grid grid-cols-2 gap-1 sm:gap-1.5 md:gap-2">
+              <Card className="p-1.5 sm:p-2 md:p-3 hover:shadow-md transition-shadow">
+                <Truck className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 mb-1" />
                 <h4 className="font-semibold text-xs mb-0.5">Livraison rapide</h4>
                 <p className="text-xs text-gray-600">2-5 jours</p>
               </Card>
-              <Card className="p-2 md:p-3 hover:shadow-md transition-shadow">
-                <ShieldCheck className="h-5 w-5 text-green-600 mb-1" />
+              <Card className="p-1.5 sm:p-2 md:p-3 hover:shadow-md transition-shadow">
+                <ShieldCheck className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 mb-1" />
                 <h4 className="font-semibold text-xs mb-0.5">Paiement sécurisé</h4>
                 <p className="text-xs text-gray-600">100% sécurisé</p>
               </Card>
-              <Card className="p-2 md:p-3 hover:shadow-md transition-shadow">
-                <RefreshCw className="h-5 w-5 text-orange-600 mb-1" />
+              <Card className="p-1.5 sm:p-2 md:p-3 hover:shadow-md transition-shadow">
+                <RefreshCw className="h-4 w-4 sm:h-5 sm:w-5 text-orange-600 mb-1" />
                 <h4 className="font-semibold text-xs mb-0.5">Retours gratuits</h4>
                 <p className="text-xs text-gray-600">Sous 30 jours</p>
               </Card>
-              <Card className="p-2 md:p-3 hover:shadow-md transition-shadow">
-                <Clock className="h-5 w-5 text-purple-600 mb-1" />
+              <Card className="p-1.5 sm:p-2 md:p-3 hover:shadow-md transition-shadow">
+                <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600 mb-1" />
                 <h4 className="font-semibold text-xs mb-0.5">Support 24/7</h4>
                 <p className="text-xs text-gray-600">Assistance</p>
               </Card>
@@ -333,7 +327,7 @@ export default function ProductDetailPage() {
         </div>
 
         {/* Tabs détails */}
-        <Card className="shadow-lg">
+        <Card className="shadow-lg mb-6 md:mb-8">
           <Tabs defaultValue="description" className="w-full">
             <TabsList className="w-full justify-start border-b rounded-none h-auto p-0 bg-transparent overflow-x-auto flex-nowrap">
               <TabsTrigger value="description" className="rounded-none border-b-2 data-[state=active]:border-primary px-4 md:px-6 py-3 text-sm whitespace-nowrap">
@@ -483,29 +477,29 @@ export default function ProductDetailPage() {
           </Tabs>
         </Card>
 
-        {/* Produits récemment consultés */}
-        <div className="mt-6 md:mt-8">
-          <h2 className="text-lg md:text-xl font-bold mb-3 text-center">Produits récemment consultés</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 md:gap-3">
-            {recentProducts.map((recentProduct) => (
-              <div key={recentProduct.id} className="scale-90 sm:scale-75">
-                <ProductCard product={recentProduct} />
-              </div>
-            ))}
+        {/* Produits récemment consultés - AMÉLIORÉ */}
+        {recentProducts.length > 0 && (
+          <div className="mb-6 md:mb-8">
+            <h2 className="text-base md:text-xl font-bold mb-3 md:mb-4 px-1">Produits récemment consultés</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2 md:gap-4">
+              {recentProducts.map((recentProduct) => (
+                <ProductCard key={recentProduct.id} product={recentProduct} />
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* Produits similaires */}
-        <div className="mt-6 md:mt-8">
-          <h2 className="text-lg md:text-xl font-bold mb-3 text-center">Produits similaires</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 md:gap-3">
-            {similarProducts.map((similarProduct) => (
-              <div key={similarProduct.id} className="scale-90 sm:scale-75">
-                <ProductCard product={similarProduct} />
-              </div>
-            ))}
+        {/* Produits similaires - AMÉLIORÉ */}
+        {similarProducts.length > 0 && (
+          <div className="mb-6 md:mb-8">
+            <h2 className="text-base md:text-xl font-bold mb-3 md:mb-4 px-1">Produits similaires</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2 md:gap-4">
+              {similarProducts.map((similarProduct) => (
+                <ProductCard key={similarProduct.id} product={similarProduct} />
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       <WhatsAppChat

@@ -3,6 +3,45 @@ import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const { id } = await params
+    const session = await getServerSession(authOptions)
+
+    if (!session || session.user.role !== "VENDOR") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const vendor = await prisma.vendor.findUnique({
+      where: { userId: session.user.id },
+      select: { id: true },
+    })
+
+    if (!vendor) {
+      return NextResponse.json({ error: "Vendor not found" }, { status: 404 })
+    }
+
+    const order = await prisma.order.findFirst({
+      where: { id, vendorId: vendor.id },
+      include: {
+        user: true,
+        items: {
+          include: { product: true },
+        },
+      },
+    })
+
+    if (!order) {
+      return NextResponse.json({ error: "Order not found" }, { status: 404 })
+    }
+
+    return NextResponse.json(order)
+  } catch (error) {
+    console.error("Error fetching vendor order:", error)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+  }
+}
+
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
