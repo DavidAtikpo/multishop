@@ -134,7 +134,6 @@ export default function VendorDashboard() {
     shippingStats: { delivered: 0, shipped: 0, processing: 0 },
   })
   const [isAddProductOpen, setIsAddProductOpen] = useState(false)
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [loading, setLoading] = useState(true)
 
   // Form state for product
@@ -231,48 +230,6 @@ export default function VendorDashboard() {
     }
   }
 
-  const handleEditProduct = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!editingProduct) return
-
-    try {
-      const response = await fetch(`/api/vendor/products/${editingProduct.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          ...productForm,
-          price: Number.parseFloat(productForm.price),
-        }),
-      })
-
-      if (response.ok) {
-        toast({
-          title: "Succès",
-          description: "Produit modifié avec succès",
-        })
-        setEditingProduct(null)
-        setProductForm({
-          name: "",
-          description: "",
-          price: "",
-          image: "",
-          category: "",
-          inStock: true,
-        })
-        fetchVendorData()
-      } else {
-        throw new Error("Erreur lors de la modification du produit")
-      }
-    } catch (error) {
-      toast({
-        title: "Erreur",
-        description: "Impossible de modifier le produit",
-        variant: "destructive",
-      })
-    }
-  }
 
   const handleDeleteProduct = async (productId: string) => {
     if (!confirm("Êtes-vous sûr de vouloir supprimer ce produit ?")) return
@@ -328,17 +285,6 @@ export default function VendorDashboard() {
     }
   }
 
-  const openEditDialog = (product: Product) => {
-    setEditingProduct(product)
-    setProductForm({
-      name: product.name,
-      description: product.description || "",
-      price: product.price.toString(),
-      image: product.image || "",
-      category: product.category,
-      inStock: product.inStock,
-    })
-  }
 
   if (loading) {
     return (
@@ -696,9 +642,11 @@ export default function VendorDashboard() {
                       </TableCell>
                       <TableCell>
                         <div className="flex space-x-2">
-                          <Button variant="outline" size="sm" onClick={() => openEditDialog(product)}>
-                            <Edit className="h-4 w-4" />
-                          </Button>
+                          <Link href={`/vendor/products/edit/${product.id}`}>
+                            <Button variant="outline" size="sm">
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </Link>
                           <Button variant="outline" size="sm" onClick={() => handleDeleteProduct(product.id)}>
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -775,94 +723,6 @@ export default function VendorDashboard() {
         </TabsContent>
       </Tabs>
 
-      <Dialog open={!!editingProduct} onOpenChange={() => setEditingProduct(null)}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Modifier le produit</DialogTitle>
-            <DialogDescription>Modifiez les informations du produit ci-dessous.</DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleEditProduct}>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="edit-name" className="text-right">
-                  Nom
-                </Label>
-                <Input
-                  id="edit-name"
-                  value={productForm.name}
-                  onChange={(e) => setProductForm({ ...productForm, name: e.target.value })}
-                  className="col-span-3"
-                  required
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="edit-price" className="text-right">
-                  Prix
-                </Label>
-                <Input
-                  id="edit-price"
-                  type="number"
-                  step="0.01"
-                  value={productForm.price}
-                  onChange={(e) => setProductForm({ ...productForm, price: e.target.value })}
-                  className="col-span-3"
-                  required
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="edit-category" className="text-right">
-                  Catégorie
-                </Label>
-                <Select
-                  value={productForm.category}
-                  onValueChange={(value) => setProductForm({ ...productForm, category: value })}
-                >
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Sélectionner une catégorie" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="electronics">Électronique</SelectItem>
-                    <SelectItem value="clothing">Vêtements</SelectItem>
-                    <SelectItem value="home">Maison</SelectItem>
-                    <SelectItem value="sports">Sports</SelectItem>
-                    <SelectItem value="wood">Bois</SelectItem>
-                    <SelectItem value="bikes">Mobilité & Transport</SelectItem>
-                    <SelectItem value="bags">Sacs</SelectItem>
-                    <SelectItem value="computers">Ordinateurs</SelectItem>
-                    <SelectItem value="phones">Smartphones</SelectItem>
-                    <SelectItem value="books">Livres</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="edit-image" className="text-right">
-                  Image URL
-                </Label>
-                <Input
-                  id="edit-image"
-                  value={productForm.image}
-                  onChange={(e) => setProductForm({ ...productForm, image: e.target.value })}
-                  className="col-span-3"
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="edit-description" className="text-right">
-                  Description
-                </Label>
-                <Textarea
-                  id="edit-description"
-                  value={productForm.description}
-                  onChange={(e) => setProductForm({ ...productForm, description: e.target.value })}
-                  className="col-span-3"
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button type="submit">Sauvegarder les modifications</Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }
