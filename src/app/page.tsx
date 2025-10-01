@@ -5,6 +5,7 @@ import { Footer } from "@/components/footer"
 import { ShippingBanner } from "@/components/shipping-banner"
 import { ClientWrapper } from "@/components/client-wrapper"
 import { WhatsAppChat } from "@/components/whatsapp-chat"
+import  SubscribeFollow  from "@/components/subscribe-follow"
 
 export default function HomePage() {
   return (
@@ -16,6 +17,7 @@ export default function HomePage() {
           <HeroSection />
           <ProductGrid />
         </main>
+        <SubscribeFollow />
         <Footer />
         <WhatsAppChat />
       </div>

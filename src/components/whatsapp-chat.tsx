@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { MessageCircle, X, Send } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -22,12 +22,27 @@ export function WhatsAppChat({
   productUrl,
 }: WhatsAppChatProps) {
   const [isOpen, setIsOpen] = useState(false)
-  const [name, setName] = useState("")
-  const [email, setEmail] = useState("")
   const [message, setMessage] = useState(defaultMessage)
+  const panelRef = useRef<HTMLDivElement>(null)
+
+  // Close when clicking outside
+  useEffect(() => {
+    if (!isOpen) return
+    const handleOutside = (e: MouseEvent | TouchEvent) => {
+      if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleOutside)
+    document.addEventListener("touchstart", handleOutside)
+    return () => {
+      document.removeEventListener("mousedown", handleOutside)
+      document.removeEventListener("touchstart", handleOutside)
+    }
+  }, [isOpen])
 
   const handleSendMessage = () => {
-    let finalMessage = `Bonjour,\n\nNom: ${name}\nEmail: ${email}\n\nMessage: ${message}`
+    let finalMessage = message
 
     if (productName) {
       finalMessage += `\n\nProduit d'intérêt: ${productName}`
@@ -44,8 +59,6 @@ export function WhatsAppChat({
     setIsOpen(false)
 
     // Reset form
-    setName("")
-    setEmail("")
     setMessage(defaultMessage)
   }
 
@@ -70,7 +83,7 @@ export function WhatsAppChat({
 
       {/* Chat Widget */}
       {isOpen && (
-        <div className="fixed bottom-20 right-2 sm:right-4 z-50 w-64 sm:w-72 max-w-[calc(100vw-1rem)] sm:max-w-[calc(100vw-2rem)]">
+        <div ref={panelRef} className="fixed bottom-4 sm:bottom-20 right-2 sm:right-4 z-50 w-64 sm:w-72 max-w-[calc(100vw-1rem)] sm:max-w-[calc(100vw-2rem)]">
           <Card className="shadow-2xl border-green-200">
             <CardHeader className="bg-green-500 text-white rounded-t-lg p-3">
               <CardTitle className="flex items-center space-x-1.5 text-sm">
@@ -112,36 +125,9 @@ export function WhatsAppChat({
               </div>
 
               <div className="border-t pt-2">
-                <p className="text-xs font-medium text-muted-foreground mb-2">Message personnalisé:</p>
+                <p className="text-xs font-medium text-muted-foreground mb-2">Message rapide:</p>
 
                 <div className="space-y-1.5">
-                  <div>
-                    <Label htmlFor="name" className="text-xs">
-                      Nom
-                    </Label>
-                    <Input
-                      id="name"
-                      placeholder="Votre nom"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className="h-7 text-xs"
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="email" className="text-xs">
-                      Email
-                    </Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="votre@email.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="h-7 text-xs"
-                    />
-                  </div>
-
                   <div>
                     <Label htmlFor="message" className="text-xs">
                       Message
@@ -158,7 +144,7 @@ export function WhatsAppChat({
                   <Button
                     onClick={handleSendMessage}
                     className="w-full bg-green-500 hover:bg-green-600 h-7 text-xs"
-                    disabled={!name.trim() || !message.trim()}
+                    disabled={!message.trim()}
                   >
                     <Send className="mr-1 h-3 w-3" />
                     Envoyer
