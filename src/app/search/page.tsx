@@ -13,6 +13,9 @@ import { useCart } from "@/hooks/use-cart"
 import type { Product } from "@/hooks/use-cart"
 import Image from "next/image"
 import Link from "next/link"
+import { Header } from "@/components/header"
+import { ShippingBanner } from "@/components/shipping-banner"
+import { Footer } from "@/components/footer"
 import { WhatsAppChat } from "@/components/whatsapp-chat"
 
 export default function SearchPage() {
@@ -21,6 +24,7 @@ export default function SearchPage() {
   const { addToCart } = useCart()
   const [searchQuery, setSearchQuery] = useState("")
   const [products, setProducts] = useState<Product[]>([])
+  const [similarProducts, setSimilarProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(false)
   const [filters, setFilters] = useState({
     category: "",
@@ -31,30 +35,145 @@ export default function SearchPage() {
   const [showFilters, setShowFilters] = useState(false)
 
   useEffect(() => {
-    const query = searchParams.get("q")
-    if (query) {
-      setSearchQuery(query)
-      searchProducts(query)
+    const query = searchParams.get("q") || ""
+    const category = searchParams.get("category") || ""
+    const mode = searchParams.get("mode") || ""
+    setSearchQuery(query)
+
+    // If coming from image search with direct matches, hydrate from sessionStorage
+    if (mode === "image") {
+      try {
+        const cache = sessionStorage.getItem('imageSearchResults')
+        if (cache) {
+          const parsed = JSON.parse(cache)
+          const mapped: Product[] = (Array.isArray(parsed) ? parsed : []).map((p: any) => ({
+            id: p.id,
+            name: p.name,
+            price: p.price ?? 0,
+            image: p.image ?? null,
+            category: p.category ?? "",
+            inStock: p.inStock ?? true,
+            rating: p.rating ?? 0,
+            reviews: p.reviews ?? 0,
+          }))
+          setProducts(mapped)
+          // Fetch similar by category (exclude current IDs)
+          if (mapped.length > 0) {
+            const mainCategory = mapped[0].category
+            if (mainCategory) {
+              fetchSimilar(mainCategory, mapped.map((p) => p.id))
+            }
+          } else {
+            setSimilarProducts([])
+          }
+          return
+        }
+      } catch {}
+    }
+
+    if (query || category) {
+      searchProducts(query, category)
+    } else {
+      setProducts([])
     }
   }, [searchParams])
 
-  const searchProducts = async (query: string) => {
+  const fetchSimilar = async (category: string, excludeIds: string[]) => {
+    try {
+      const sp = new URLSearchParams()
+      sp.set("category", category)
+      sp.set("limit", "12")
+      const res = await fetch(`/api/products?${sp.toString()}`, { cache: "no-store" })
+      if (!res.ok) {
+        setSimilarProducts([])
+        return
+      }
+      const data = await res.json()
+      const list = Array.isArray(data?.products) ? data.products : []
+      const mapped: Product[] = list
+        .filter((p: any) => !excludeIds.includes(p.id))
+        .map((p: any) => ({
+          id: p.id,
+          name: p.name,
+          price: p.price ?? 0,
+          image: p.image ?? null,
+          category: p.category ?? "",
+          inStock: p.inStock ?? true,
+          rating: p.rating ?? 0,
+          reviews: p.reviews ?? 0,
+        }))
+      setSimilarProducts(mapped)
+    } catch {
+      setSimilarProducts([])
+    }
+  }
+
+  const searchProducts = async (query: string, category?: string) => {
     setLoading(true)
     try {
-      // Simuler une recherche - dans un vrai projet, vous feriez un appel API
-      const mockProducts: Product[] = [
-        {
-          id: "1",
-          name: `Résultat pour "${query}"`,
-          price: 299.99,
-          image: "/placeholder.svg",
-          category: "wood",
-          inStock: true,
-          rating: 4.5,
-          reviews: 23,
-        },
-      ]
-      setProducts(mockProducts)
+      const params = new URLSearchParams()
+      if (query) params.set("search", query)
+      if (category) params.set("category", category)
+      params.set("limit", "24")
+
+      const res = await fetch(`/api/products?${params.toString()}`, { cache: "no-store" })
+      if (!res.ok) {
+        setProducts([])
+        return
+      }
+      const data = await res.json()
+      const apiProducts = Array.isArray(data?.products) ? data.products : []
+      let mapped: Product[] = apiProducts
+        .map((p: any) => ({
+          id: p.id,
+          name: p.name,
+          price: p.price ?? 0,
+          image: p.image ?? null,
+          category: p.category ?? "",
+          inStock: p.inStock ?? true,
+          rating: p.rating ?? 0,
+          reviews: p.reviews ?? 0,
+        }))
+      setProducts(mapped)
+
+      // Fallback: if no results, try similar terms from query tokens and merge unique results
+      if (mapped.length === 0 && query) {
+        const tokens = query
+          .toLowerCase()
+          .split(/\s+/)
+          .filter((t) => t.length >= 3)
+          .slice(0, 5)
+        if (tokens.length > 0) {
+          const results = await Promise.all(
+            tokens.map(async (tok) => {
+              const sp = new URLSearchParams()
+              sp.set("search", tok)
+              if (category) sp.set("category", category)
+              sp.set("limit", "12")
+              const r = await fetch(`/api/products?${sp.toString()}`, { cache: "no-store" })
+              if (!r.ok) return [] as any[]
+              const d = await r.json()
+              return Array.isArray(d?.products) ? d.products : []
+            })
+          )
+          const merged = ([] as any[]).concat(...results)
+          const byId = new Map<string, any>()
+          merged.forEach((p: any) => {
+            if (!byId.has(p.id)) byId.set(p.id, p)
+          })
+          mapped = Array.from(byId.values()).map((p: any) => ({
+            id: p.id,
+            name: p.name,
+            price: p.price ?? 0,
+            image: p.image ?? null,
+            category: p.category ?? "",
+            inStock: p.inStock ?? true,
+            rating: p.rating ?? 0,
+            reviews: p.reviews ?? 0,
+          }))
+          setProducts(mapped)
+        }
+      }
     } catch (error) {
       console.error("Erreur de recherche:", error)
     } finally {
@@ -92,6 +211,8 @@ export default function SearchPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <ShippingBanner />
+      <Header />
       <div className="container mx-auto px-4 py-8">
         {/* Search Header */}
         <div className="mb-8">
@@ -225,14 +346,20 @@ export default function SearchPage() {
                 {products.map((product) => (
                   <Card key={product.id} className="group hover:shadow-lg transition-shadow">
                     <CardContent className="p-4">
-                      <div className="relative aspect-square mb-4 overflow-hidden rounded-md">
-                        <Image
-                          src={product.image || "/placeholder.svg"}
-                          alt={product.name}
-                          fill
-                          className="object-cover group-hover:scale-105 transition-transform"
-                        />
-                      </div>
+                      {product.image ? (
+                        <div className="relative aspect-square mb-4 overflow-hidden rounded-md">
+                          <Image
+                            src={product.image}
+                            alt={product.name}
+                            fill
+                            className="object-cover group-hover:scale-105 transition-transform"
+                          />
+                        </div>
+                      ) : (
+                        <div className="aspect-square mb-4 overflow-hidden rounded-md bg-gray-100 flex items-center justify-center text-gray-500 text-sm">
+                          {t("noImage") ||  "Aucune image"}
+                        </div>
+                      )}
                       <h3 className="font-semibold text-lg mb-2">{product.name}</h3>
                       <div className="flex items-center justify-between mb-4">
                         <span className="text-2xl font-bold text-primary">€{product.price.toFixed(2)}</span>
@@ -274,6 +401,52 @@ export default function SearchPage() {
             </div>
           )}
         </div>
+
+        {/* Similar products (image search) */}
+        {similarProducts.length > 0 && (
+          <div className="mt-10">
+            <h2 className="text-2xl font-bold mb-4">Produits similaires</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {similarProducts.map((product) => (
+                <Card key={product.id} className="group hover:shadow-lg transition-shadow">
+                  <CardContent className="p-4">
+                    {product.image ? (
+                      <div className="relative aspect-square mb-4 overflow-hidden rounded-md">
+                        <Image
+                          src={product.image}
+                          alt={product.name}
+                          fill
+                          className="object-cover group-hover:scale-105 transition-transform"
+                        />
+                      </div>
+                    ) : (
+                      <div className="aspect-square mb-4 overflow-hidden rounded-md bg-gray-100 flex items-center justify-center text-gray-500 text-sm">
+                        Aucune image
+                      </div>
+                    )}
+                    <h3 className="font-semibold text-lg mb-2">{product.name}</h3>
+                    <div className="flex items-center justify-between mb-4">
+                      <span className="text-2xl font-bold text-primary">€{product.price.toFixed(2)}</span>
+                      <span className={`text-sm px-2 py-1 rounded ${product.inStock ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}>
+                        {product.inStock ? "En stock" : "Rupture"}
+                      </span>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button onClick={() => addToCart(product)} disabled={!product.inStock} className="flex-1">
+                        Ajouter au panier
+                      </Button>
+                      <Link href={`/products/${product.id}`}>
+                        <Button variant="outline" size="sm">
+                          Voir
+                        </Button>
+                      </Link>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       <WhatsAppChat
@@ -283,7 +456,7 @@ export default function SearchPage() {
             : "Bonjour, j'aimerais avoir de l'aide pour trouver des produits."
         }
       />
+      <Footer />
     </div>
   )
 }
-

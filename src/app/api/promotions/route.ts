@@ -32,6 +32,7 @@ export async function POST(request: NextRequest) {
 
     const promotion = await prisma.promotion.create({
       data: {
+        id: crypto.randomUUID(),
         name,
         description,
         type,
@@ -44,6 +45,7 @@ export async function POST(request: NextRequest) {
         usageLimit,
         usageCount: 0,
         code: code || null,
+        updatedAt: new Date(),
       },
     })
 

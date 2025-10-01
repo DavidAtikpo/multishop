@@ -1,10 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server"
 import Stripe from "stripe"
-import { PrismaClient } from "@prisma/client"
+import { PrismaClient, OrderStatus } from "@prisma/client"
 
-const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: "2024-06-20",
-}) : null
+const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null
 
 const prisma = new PrismaClient()
 
@@ -36,23 +34,11 @@ export async function POST(request: NextRequest) {
           await prisma.order.update({
             where: { id: orderId },
             data: {
-              status: "confirmed",
-              paymentId: session.id,
-              paymentStatus: "paid",
+              status: OrderStatus.PROCESSING,
             },
           })
 
-          // Créer un enregistrement de paiement
-          await prisma.payment.create({
-            data: {
-              orderId: orderId,
-              amount: (session.amount_total || 0) / 100,
-              currency: session.currency || "eur",
-              paymentMethod: "stripe",
-              stripeSessionId: session.id,
-              status: "completed",
-            },
-          })
+          // Enregistrer d'autres métadonnées de paiement si votre schéma les supporte (non présent ici)
         }
         break
 

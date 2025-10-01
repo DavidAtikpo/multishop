@@ -112,10 +112,16 @@ export const products: Product[] = [
   },
 ]
 
-export const categories = [
-  { id: "wood", icon: "🪵" },
-  { id: "bikes", icon: "🚴" },
-  { id: "bags", icon: "🎒" },
-  { id: "computers", icon: "💻" },
-  { id: "phones", icon: "📱" },
-]
+export type Category = { id: string; name?: string; icon?: string }
+
+// Fetch categories from the database via the products API grouping
+export async function fetchCategories(): Promise<Category[]> {
+  try {
+    const res = await fetch("/api/products?limit=1", { cache: "no-store" })
+    if (!res.ok) return []
+    const data = await res.json()
+    return Array.isArray(data?.categories) ? data.categories : []
+  } catch {
+    return []
+  }
+}

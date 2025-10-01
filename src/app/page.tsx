@@ -17,7 +17,7 @@ export default function HomePage() {
           <ProductGrid />
         </main>
         <Footer />
-        <WhatsAppChat defaultMessage="Bonjour, j'aimerais découvrir vos produits et offres spéciales." />
+        <WhatsAppChat />
       </div>
     </ClientWrapper>
   )

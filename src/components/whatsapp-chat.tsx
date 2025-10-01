@@ -16,7 +16,7 @@ interface WhatsAppChatProps {
 }
 
 export function WhatsAppChat({
-  phoneNumber = "+22892591228", // Remplacez par votre numéro WhatsApp
+  phoneNumber = "+229 67 04 92 96", // Remplacez par votre numéro WhatsApp
   defaultMessage = "Bonjour, j'aimerais avoir plus d'informations.",
   productName,
   productUrl,
@@ -70,25 +70,25 @@ export function WhatsAppChat({
 
       {/* Chat Widget */}
       {isOpen && (
-        <div className="fixed bottom-24 right-6 z-50 w-80 max-w-[calc(100vw-3rem)]">
+        <div className="fixed bottom-20 right-2 sm:right-4 z-50 w-64 sm:w-72 max-w-[calc(100vw-1rem)] sm:max-w-[calc(100vw-2rem)]">
           <Card className="shadow-2xl border-green-200">
-            <CardHeader className="bg-green-500 text-white rounded-t-lg">
-              <CardTitle className="flex items-center space-x-2">
-                <MessageCircle className="h-5 w-5" />
-                <span>Chat WhatsApp</span>
+            <CardHeader className="bg-green-500 text-white rounded-t-lg p-3">
+              <CardTitle className="flex items-center space-x-1.5 text-sm">
+                <MessageCircle className="h-4 w-4" />
+                <span>WhatsApp</span>
               </CardTitle>
-              <p className="text-green-100 text-sm">Nous sommes là pour vous aider !</p>
+              <p className="text-green-100 text-xs">Nous sommes là pour vous aider !</p>
             </CardHeader>
-            <CardContent className="p-4 space-y-4">
+            <CardContent className="p-2 sm:p-3 space-y-2 sm:space-y-3">
               {/* Quick Actions */}
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-muted-foreground">Actions rapides:</p>
-                <div className="flex flex-col space-y-2">
+              <div className="space-y-1.5">
+                <p className="text-xs font-medium text-muted-foreground">Actions rapides:</p>
+                <div className="flex flex-col space-y-1">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => handleQuickMessage("Bonjour, j'aimerais avoir des informations sur vos produits.")}
-                    className="justify-start text-left h-auto py-2"
+                    className="justify-start text-left h-auto py-1 text-xs"
                   >
                     💬 Informations produits
                   </Button>
@@ -96,7 +96,7 @@ export function WhatsAppChat({
                     variant="outline"
                     size="sm"
                     onClick={() => handleQuickMessage("Bonjour, j'ai besoin d'aide pour ma commande.")}
-                    className="justify-start text-left h-auto py-2"
+                    className="justify-start text-left h-auto py-1 text-xs"
                   >
                     📦 Aide commande
                   </Button>
@@ -104,19 +104,19 @@ export function WhatsAppChat({
                     variant="outline"
                     size="sm"
                     onClick={() => handleQuickMessage("Bonjour, j'aimerais connaître vos conditions de livraison.")}
-                    className="justify-start text-left h-auto py-2"
+                    className="justify-start text-left h-auto py-1 text-xs"
                   >
                     🚚 Livraison
                   </Button>
                 </div>
               </div>
 
-              <div className="border-t pt-4">
-                <p className="text-sm font-medium text-muted-foreground mb-3">Ou envoyez un message personnalisé:</p>
+              <div className="border-t pt-2">
+                <p className="text-xs font-medium text-muted-foreground mb-2">Message personnalisé:</p>
 
-                <div className="space-y-3">
+                <div className="space-y-1.5">
                   <div>
-                    <Label htmlFor="name" className="text-sm">
+                    <Label htmlFor="name" className="text-xs">
                       Nom
                     </Label>
                     <Input
@@ -124,12 +124,12 @@ export function WhatsAppChat({
                       placeholder="Votre nom"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      className="h-9"
+                      className="h-7 text-xs"
                     />
                   </div>
 
                   <div>
-                    <Label htmlFor="email" className="text-sm">
+                    <Label htmlFor="email" className="text-xs">
                       Email
                     </Label>
                     <Input
@@ -138,12 +138,12 @@ export function WhatsAppChat({
                       placeholder="votre@email.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="h-9"
+                      className="h-7 text-xs"
                     />
                   </div>
 
                   <div>
-                    <Label htmlFor="message" className="text-sm">
+                    <Label htmlFor="message" className="text-xs">
                       Message
                     </Label>
                     <Textarea
@@ -151,23 +151,23 @@ export function WhatsAppChat({
                       placeholder="Votre message..."
                       value={message}
                       onChange={(e) => setMessage(e.target.value)}
-                      className="min-h-[80px] resize-none"
+                      className="min-h-[50px] resize-none text-xs"
                     />
                   </div>
 
                   <Button
                     onClick={handleSendMessage}
-                    className="w-full bg-green-500 hover:bg-green-600"
+                    className="w-full bg-green-500 hover:bg-green-600 h-7 text-xs"
                     disabled={!name.trim() || !message.trim()}
                   >
-                    <Send className="mr-2 h-4 w-4" />
-                    Envoyer sur WhatsApp
+                    <Send className="mr-1 h-3 w-3" />
+                    Envoyer
                   </Button>
                 </div>
               </div>
 
-              <div className="text-xs text-muted-foreground text-center pt-2 border-t">
-                Vous serez redirigé vers WhatsApp
+              <div className="text-xs text-muted-foreground text-center pt-1 border-t">
+                Redirection vers WhatsApp
               </div>
             </CardContent>
           </Card>

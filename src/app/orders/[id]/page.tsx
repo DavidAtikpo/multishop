@@ -25,17 +25,15 @@ interface OrderItem {
 
 interface Order {
   id: string
-  customerName: string
-  customerEmail: string
-  customerPhone: string
-  shippingAddress: string
-  totalAmount: number
+  shippingAddress: string | null
+  total: number
   status: string
   trackingNumber: string | null
   notes: string | null
   createdAt: string
   updatedAt: string
-  orderItems: OrderItem[]
+  items: OrderItem[]
+  user?: { name?: string | null; email?: string | null } | null
 }
 
 const statusConfig = {
@@ -146,7 +144,7 @@ export default function OrderDetailsPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {order.orderItems.map((item) => (
+                {(order.items || []).map((item) => (
                   <div key={item.id} className="flex items-center gap-4 p-4 border rounded-lg">
                     <div className="relative w-16 h-16 rounded-md overflow-hidden bg-gray-100">
                       {item.product.image && (
@@ -219,16 +217,13 @@ export default function OrderDetailsPage() {
             <CardContent className="space-y-3">
               <div className="flex items-center gap-2">
                 <User className="h-4 w-4 text-muted-foreground" />
-                <span>{order.customerName}</span>
+                <span>{order.user?.name || ""}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Mail className="h-4 w-4 text-muted-foreground" />
-                <span>{order.customerEmail}</span>
+                <span>{order.user?.email || ""}</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Phone className="h-4 w-4 text-muted-foreground" />
-                <span>{order.customerPhone}</span>
-              </div>
+              
             </CardContent>
           </Card>
 
@@ -241,7 +236,7 @@ export default function OrderDetailsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm">{order.shippingAddress}</p>
+              <p className="text-sm">{order.shippingAddress || ""}</p>
             </CardContent>
           </Card>
 
@@ -253,11 +248,11 @@ export default function OrderDetailsPage() {
             <CardContent className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span>Sous-total</span>
-                <span>{(order.totalAmount / 1.2).toFixed(2)} €</span>
+                <span>{(order.total / 1.2).toFixed(2)} €</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span>TVA (20%)</span>
-                <span>{((order.totalAmount * 0.2) / 1.2).toFixed(2)} €</span>
+                <span>{((order.total * 0.2) / 1.2).toFixed(2)} €</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span>Livraison</span>
@@ -266,7 +261,7 @@ export default function OrderDetailsPage() {
               <Separator />
               <div className="flex justify-between font-bold">
                 <span>Total</span>
-                <span>{order.totalAmount.toFixed(2)} €</span>
+                <span>{order.total.toFixed(2)} €</span>
               </div>
             </CardContent>
           </Card>

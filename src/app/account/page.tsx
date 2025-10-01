@@ -3,8 +3,6 @@
 import type React from "react"
 
 import { useState, useEffect } from "react"
-import { useSession } from "next-auth/react"
-import { redirect } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -13,9 +11,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { useToast } from "@/hooks/use-toast"
+import { Header } from "@/components/header"
+import { useLanguage } from "@/hooks/use-language"
+import { Footer } from "@/components/footer"
+import { ShippingBanner } from "@/components/shipping-banner"
 import { User, Package, MapPin, CreditCard, Shield, LogOut, Edit, Eye } from "lucide-react"
 import Link from "next/link"
-import { Header } from "@/components/header"
 
 interface UserProfile {
   id: string
@@ -34,9 +35,6 @@ interface Order {
   totalAmount: number
   status: string
   createdAt: string
-  shippingAddress?: string | null
-  paymentMethod?: string | null
-  trackingNumber?: string | null
   orderItems: Array<{
     quantity: number
     price: number
@@ -48,11 +46,13 @@ interface Order {
 }
 
 export default function AccountPage() {
-  const { data: session, status } = useSession()
+  const { t } = useLanguage()
   const [user, setUser] = useState<UserProfile | null>(null)
   const [orders, setOrders] = useState<Order[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isEditing, setIsEditing] = useState(false)
+  const [showPasswordForm, setShowPasswordForm] = useState(false)
+  const [passwords, setPasswords] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" })
   const { toast } = useToast()
 
   const [formData, setFormData] = useState({
@@ -66,82 +66,60 @@ export default function AccountPage() {
   })
 
   useEffect(() => {
-    if (status === "loading") return
-    if (!session) {
-      redirect("/auth/signin")
-      return
-    }
-
-    const fetchUserData = async () => {
+    const load = async () => {
       try {
         setIsLoading(true)
-        
-        // Récupérer les données du profil utilisateur
-        const profileResponse = await fetch("/api/user/profile")
-        if (profileResponse.ok) {
-          const profileData = await profileResponse.json()
-          setUser(profileData)
+        const [userRes, ordersRes] = await Promise.all([
+          fetch("/api/account/me", { cache: "no-store" }),
+          fetch("/api/account/orders", { cache: "no-store" }),
+        ])
+
+        if (userRes.ok) {
+          const u = await userRes.json()
+          setUser(u)
           setFormData({
-            name: profileData.name || "",
-            email: profileData.email || "",
-            phone: profileData.phone || "",
-            address: profileData.address || "",
-            city: profileData.city || "",
-            postalCode: profileData.postalCode || "",
-            country: profileData.country || "France",
+            name: u.name || "",
+            email: u.email || "",
+            phone: u.phone || "",
+            address: u.address || "",
+            city: u.city || "",
+            postalCode: u.postalCode || "",
+            country: u.country || "",
           })
         }
 
-        // Récupérer les commandes
-        const ordersResponse = await fetch("/api/user/orders")
-        if (ordersResponse.ok) {
-          const ordersData = await ordersResponse.json()
-          setOrders(ordersData)
+        if (ordersRes.ok) {
+          const os = await ordersRes.json()
+          setOrders(os)
         }
-      } catch (error) {
-        console.error("Erreur lors du chargement des données:", error)
-        toast({
-          title: "Erreur",
-          description: "Impossible de charger vos données.",
-          variant: "destructive",
-        })
       } finally {
         setIsLoading(false)
       }
     }
-
-    fetchUserData()
-  }, [session, status, toast])
+    load()
+  }, [])
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
 
     try {
-      const response = await fetch("/api/user/profile", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
+      const res = await fetch("/api/account/me", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       })
 
-      if (response.ok) {
-        const updatedUser = await response.json()
-        setUser(updatedUser)
-        toast({
-          title: "Profil mis à jour",
-          description: "Vos informations ont été sauvegardées avec succès.",
-        })
-        setIsEditing(false)
-      } else {
-        throw new Error("Erreur lors de la sauvegarde")
-      }
+      if (!res.ok) throw new Error("Failed to update profile")
+
+      if (user) setUser({ ...user, ...formData })
+
+      toast({ title: t("personalInfo"), description: t("save") })
+      setIsEditing(false)
     } catch (error) {
-      console.error("Erreur lors de la sauvegarde:", error)
       toast({
         title: "Erreur",
-        description: "Impossible de sauvegarder vos informations.",
+        description: t("unauthorizedDesc"),
         variant: "destructive",
       })
     } finally {
@@ -152,6 +130,7 @@ export default function AccountPage() {
   const getStatusBadge = (status: string) => {
     const statusConfig = {
       pending: { label: "En attente", variant: "secondary" as const },
+      confirmed: { label: "Confirmée", variant: "default" as const },
       processing: { label: "En préparation", variant: "default" as const },
       shipped: { label: "Expédiée", variant: "default" as const },
       delivered: { label: "Livrée", variant: "default" as const },
@@ -167,7 +146,7 @@ export default function AccountPage() {
       <div className="container mx-auto px-4 py-8">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-2 text-muted-foreground">Chargement...</p>
+          <p className="mt-2 text-muted-foreground">{t("loading")}</p>
         </div>
       </div>
     )
@@ -177,10 +156,10 @@ export default function AccountPage() {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Accès non autorisé</h1>
-          <p className="text-muted-foreground mb-6">Vous devez être connecté pour accéder à cette page.</p>
+          <h1 className="text-2xl font-bold mb-4">{t("unauthorizedTitle")}</h1>
+          <p className="text-muted-foreground mb-6">{t("unauthorizedDesc")}</p>
           <Button asChild>
-            <Link href="/login">Se connecter</Link>
+            <Link href="auth/signin">{t("login")}</Link>
           </Button>
         </div>
       </div>
@@ -189,37 +168,38 @@ export default function AccountPage() {
 
   return (
     <>
+      <ShippingBanner />
       <Header />
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-6 md:py-8">
       <div className="max-w-4xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6 md:mb-8">
           <div>
-            <h1 className="text-3xl font-bold">Mon compte</h1>
-            <p className="text-muted-foreground">Gérez vos informations et vos commandes</p>
+            <h1 className="text-3xl font-bold">{t("myAccount")}</h1>
+            <p className="text-muted-foreground">{t("manageInfoOrders")}</p>
           </div>
-          <Button variant="outline" className="text-red-600 hover:text-red-700 bg-transparent">
+          <Button variant="outline" className="w-full sm:w-auto text-red-600 hover:text-red-700 bg-transparent">
             <LogOut className="h-4 w-4 mr-2" />
-            Se déconnecter
+            {t("signOut")}
           </Button>
         </div>
 
-        <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+        <Tabs defaultValue="profile" className="space-y-4 md:space-y-6">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
             <TabsTrigger value="profile" className="flex items-center gap-2">
               <User className="h-4 w-4" />
-              Profil
+              {t("tabProfile")}
             </TabsTrigger>
             <TabsTrigger value="orders" className="flex items-center gap-2">
               <Package className="h-4 w-4" />
-              Commandes
+              {t("tabOrders")}
             </TabsTrigger>
             <TabsTrigger value="addresses" className="flex items-center gap-2">
               <MapPin className="h-4 w-4" />
-              Adresses
+              {t("tabAddresses")}
             </TabsTrigger>
             <TabsTrigger value="settings" className="flex items-center gap-2">
               <Shield className="h-4 w-4" />
-              Paramètres
+              {t("tabSettings")}
             </TabsTrigger>
           </TabsList>
 
@@ -227,10 +207,10 @@ export default function AccountPage() {
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle>Informations personnelles</CardTitle>
+                  <CardTitle>{t("personalInfo")}</CardTitle>
                   <Button variant="outline" onClick={() => setIsEditing(!isEditing)}>
                     <Edit className="h-4 w-4 mr-2" />
-                    {isEditing ? "Annuler" : "Modifier"}
+                    {isEditing ? t("cancel") : t("edit")}
                   </Button>
                 </div>
               </CardHeader>
@@ -239,7 +219,7 @@ export default function AccountPage() {
                   <form onSubmit={handleSaveProfile} className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="name">Nom complet</Label>
+                        <Label htmlFor="name">{t("fullName")}</Label>
                         <Input
                           id="name"
                           value={formData.name}
@@ -248,7 +228,7 @@ export default function AccountPage() {
                         />
                       </div>
                       <div>
-                        <Label htmlFor="email">Email</Label>
+                        <Label htmlFor="email">{t("email")}</Label>
                         <Input
                           id="email"
                           type="email"
@@ -259,7 +239,7 @@ export default function AccountPage() {
                       </div>
                     </div>
                     <div>
-                      <Label htmlFor="phone">Téléphone</Label>
+                      <Label htmlFor="phone">{t("phone")}</Label>
                       <Input
                         id="phone"
                         value={formData.phone}
@@ -267,7 +247,7 @@ export default function AccountPage() {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="address">Adresse</Label>
+                      <Label htmlFor="address">{t("addressLabel")}</Label>
                       <Input
                         id="address"
                         value={formData.address}
@@ -276,7 +256,7 @@ export default function AccountPage() {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div>
-                        <Label htmlFor="city">Ville</Label>
+                        <Label htmlFor="city">{t("city")}</Label>
                         <Input
                           id="city"
                           value={formData.city}
@@ -284,7 +264,7 @@ export default function AccountPage() {
                         />
                       </div>
                       <div>
-                        <Label htmlFor="postalCode">Code postal</Label>
+                        <Label htmlFor="postalCode">{t("postalCode")}</Label>
                         <Input
                           id="postalCode"
                           value={formData.postalCode}
@@ -292,7 +272,7 @@ export default function AccountPage() {
                         />
                       </div>
                       <div>
-                        <Label htmlFor="country">Pays</Label>
+                        <Label htmlFor="country">{t("country")}</Label>
                         <Input
                           id="country"
                           value={formData.country}
@@ -302,10 +282,10 @@ export default function AccountPage() {
                     </div>
                     <div className="flex gap-2">
                       <Button type="submit" disabled={isLoading}>
-                        {isLoading ? "Sauvegarde..." : "Sauvegarder"}
+                        {isLoading ? t("saving") : t("save")}
                       </Button>
                       <Button type="button" variant="outline" onClick={() => setIsEditing(false)}>
-                        Annuler
+                        {t("cancel")}
                       </Button>
                     </div>
                   </form>
@@ -313,28 +293,28 @@ export default function AccountPage() {
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <p className="text-sm font-medium text-muted-foreground">Nom</p>
+                        <p className="text-sm font-medium text-muted-foreground">{t("fullName")}</p>
                         <p>{user.name}</p>
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-muted-foreground">Email</p>
+                        <p className="text-sm font-medium text-muted-foreground">{t("email")}</p>
                         <p>{user.email}</p>
                       </div>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground">Téléphone</p>
-                      <p>{user.phone || "Non renseigné"}</p>
+                      <p className="text-sm font-medium text-muted-foreground">{t("phone")}</p>
+                      <p>{user.phone || t("notProvided")}</p>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground">Adresse</p>
+                      <p className="text-sm font-medium text-muted-foreground">{t("addressLabel")}</p>
                       <p>
                         {user.address
                           ? `${user.address}, ${user.city} ${user.postalCode}, ${user.country}`
-                          : "Non renseignée"}
+                          : t("addressNotProvided")}
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground">Membre depuis</p>
+                      <p className="text-sm font-medium text-muted-foreground">{t("memberSince")}</p>
                       <p>
                         {new Date(user.createdAt).toLocaleDateString("fr-FR", {
                           year: "numeric",
@@ -352,15 +332,17 @@ export default function AccountPage() {
           <TabsContent value="orders" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Mes commandes ({orders.length})</CardTitle>
+                <CardTitle>
+                  {t("myOrdersTitle")} ({orders.length})
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 {orders.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
                     <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>Aucune commande pour le moment.</p>
+                    <p>{t("noOrders")}</p>
                     <Button asChild className="mt-4">
-                      <Link href="/">Commencer mes achats</Link>
+                      <Link href="/">{t("startShopping")}</Link>
                     </Button>
                   </div>
                 ) : (
@@ -370,7 +352,7 @@ export default function AccountPage() {
                         <CardContent className="pt-6">
                           <div className="flex items-center justify-between mb-4">
                             <div>
-                              <h3 className="font-semibold">Commande #{order.id.slice(-8)}</h3>
+                              <h3 className="font-semibold">{t("orderLabel")} #{order.id.slice(-8)}</h3>
                               <p className="text-sm text-muted-foreground">
                                 {new Date(order.createdAt).toLocaleDateString("fr-FR", {
                                   year: "numeric",
@@ -394,7 +376,7 @@ export default function AccountPage() {
                                 <div className="flex-1">
                                   <p className="font-medium">{item.product.name}</p>
                                   <p className="text-muted-foreground">
-                                    Qté: {item.quantity} × {item.price.toFixed(2)} €
+                                    {t("qtyShort")}: {item.quantity} × {item.price.toFixed(2)} €
                                   </p>
                                 </div>
                               </div>
@@ -407,13 +389,13 @@ export default function AccountPage() {
                             <Button variant="outline" size="sm" asChild>
                               <Link href={`/orders/${order.id}`}>
                                 <Eye className="h-4 w-4 mr-2" />
-                                Voir détails
+                                {t("orderViewDetails")}
                               </Link>
                             </Button>
                             <Button variant="outline" size="sm" asChild>
                               <Link href="/track">
                                 <Package className="h-4 w-4 mr-2" />
-                                Suivre
+                                {t("track")}
                               </Link>
                             </Button>
                           </div>
@@ -500,20 +482,94 @@ export default function AccountPage() {
                 <CardTitle>Sécurité</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Button variant="outline" className="w-full justify-start bg-transparent">
+                <Button variant="outline" className="w-full justify-start bg-transparent" onClick={() => setShowPasswordForm((v) => !v)}>
                   <Shield className="h-4 w-4 mr-2" />
-                  Changer le mot de passe
+                  {t("changePassword")}
                 </Button>
+                {showPasswordForm && (
+                  <div className="mt-4 space-y-3">
+                    {user?.email && (
+                      <p className="text-xs text-muted-foreground">{user.email}</p>
+                    )}
+                    {user && user.email && (
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        {/** If user has a password, ask for current password. We do not know here; show field optional. */}
+                        <div>
+                          <Label htmlFor="currentPassword">{t("currentPassword")}</Label>
+                          <Input
+                            id="currentPassword"
+                            type="password"
+                            value={passwords.currentPassword}
+                            onChange={(e) => setPasswords((p) => ({ ...p, currentPassword: e.target.value }))}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="newPassword">{t("newPassword")}</Label>
+                          <Input
+                            id="newPassword"
+                            type="password"
+                            value={passwords.newPassword}
+                            onChange={(e) => setPasswords((p) => ({ ...p, newPassword: e.target.value }))}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="confirmPassword">{t("confirmPassword")}</Label>
+                          <Input
+                            id="confirmPassword"
+                            type="password"
+                            value={passwords.confirmPassword}
+                            onChange={(e) => setPasswords((p) => ({ ...p, confirmPassword: e.target.value }))}
+                          />
+                        </div>
+                      </div>
+                    )}
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={async () => {
+                          if (passwords.newPassword.length < 8) {
+                            toast({ title: t("weakPassword"), variant: "destructive" })
+                            return
+                          }
+                          if (passwords.newPassword !== passwords.confirmPassword) {
+                            toast({ title: t("passwordMismatch"), variant: "destructive" })
+                            return
+                          }
+                          const res = await fetch("/api/account/password", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              currentPassword: passwords.currentPassword || undefined,
+                              newPassword: passwords.newPassword,
+                            }),
+                          })
+                          if (!res.ok) {
+                            const data = await res.json().catch(() => ({}))
+                            toast({ title: data.error || "Error", variant: "destructive" })
+                            return
+                          }
+                          setShowPasswordForm(false)
+                          setPasswords({ currentPassword: "", newPassword: "", confirmPassword: "" })
+                          toast({ title: t("passwordUpdated") })
+                        }}
+                      >
+                        {t("updatePassword")}
+                      </Button>
+                      <Button variant="outline" onClick={() => setShowPasswordForm(false)}>
+                        {t("cancel")}
+                      </Button>
+                    </div>
+                  </div>
+                )}
                 <Button variant="outline" className="w-full justify-start bg-transparent">
                   <CreditCard className="h-4 w-4 mr-2" />
-                  Gérer les moyens de paiement
+                  {t("managePayments")}
                 </Button>
                 <Button
                   variant="outline"
                   className="w-full justify-start text-red-600 hover:text-red-700 bg-transparent"
                 >
                   <User className="h-4 w-4 mr-2" />
-                  Supprimer mon compte
+                  {t("deleteAccount")}
                 </Button>
               </CardContent>
             </Card>
@@ -521,6 +577,7 @@ export default function AccountPage() {
         </Tabs>
       </div>
     </div>
+    <Footer />
     </>
   )
 }

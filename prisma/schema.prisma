@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -23,8 +20,7 @@ model Account {
   scope             String?
   id_token          String?
   session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
@@ -38,34 +34,41 @@ model Session {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String    @unique
-  emailVerified DateTime?
-  image         String?
-  role          UserRole  @default(CUSTOMER)
-  accounts      Account[]
-  sessions      Session[]
-  orders        Order[]
-  vendor        Vendor?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id             String          @id @default(cuid())
+  name           String?
+  email          String          @unique
+  emailVerified  DateTime?
+  image          String?
+  role           UserRole        @default(CUSTOMER)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  password       String?
+  accounts       Account[]
+  addresses      Address[]
+  cart           Cart?
+  orders         Order[]
+  reviews        Review[]
+  sessions       Session[]
+  tickets        SupportTicket[]
+  ticketMessages TicketMessage[]
+  vendor         Vendor?
+  wishlist       Wishlist[]
 }
 
 model Vendor {
   id          String    @id @default(cuid())
   userId      String    @unique
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   storeName   String
   description String?
   logo        String?
   phone       String?
   address     String?
   isActive    Boolean   @default(true)
-  products    Product[]
-  orders      Order[]   @relation("VendorOrders")
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+  orders      Order[]   @relation("VendorOrders")
+  products    Product[]
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model VerificationToken {
@@ -77,54 +80,187 @@ model VerificationToken {
 }
 
 model Product {
-  id          String   @id @default(cuid())
-  name        String
-  description String?
-  price       Float
-  image       String?
-  images      String[] @default([])
-  category    String
-  inStock     Boolean  @default(true)
-  rating      Float    @default(0)
-  reviews     Int      @default(0)
-  brand       String?
-  sku         String?
-  weight      Float?
-  dimensions  String?
-  tags        String[] @default([])
-  quantity    Int      @default(0)
-  views       Int      @default(0)
-  vendorId    String?
-  vendor      Vendor?  @relation(fields: [vendorId], references: [id], onDelete: SetNull)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  orderItems  OrderItem[]
+  id             String      @id @default(cuid())
+  name           String
+  description    String?
+  price          Float
+  image          String?
+  category       String
+  inStock        Boolean     @default(true)
+  rating         Float       @default(0)
+  reviews        Int         @default(0)
+  vendorId       String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  brand          String?
+  dimensions     String?
+  images         String[]    @default([])
+  quantity       Int         @default(0)
+  sku            String?
+  tags           String[]    @default([])
+  views          Int         @default(0)
+  weight         Float?
+  categoryId     String?
+  cartItems      CartItem[]
+  orderItems     OrderItem[]
+  categoryRef    Category?   @relation(fields: [categoryId], references: [id])
+  vendor         Vendor?     @relation(fields: [vendorId], references: [id])
+  productReviews Review[]
+  wishlistItems  Wishlist[]
 }
 
 model Order {
-  id        String      @id @default(cuid())
-  userId    String
-  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  vendorId  String?
-  vendor    Vendor?     @relation("VendorOrders", fields: [vendorId], references: [id], onDelete: SetNull)
-  items     OrderItem[]
-  total     Float
-  status    OrderStatus @default(PENDING)
+  id              String      @id @default(cuid())
+  userId          String
+  vendorId        String?
+  total           Float
+  status          OrderStatus @default(PENDING)
   shippingAddress String?
   paymentMethod   String?
   trackingNumber  String?
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vendor          Vendor?     @relation("VendorOrders", fields: [vendorId], references: [id])
+  items           OrderItem[]
 }
 
 model OrderItem {
   id        String  @id @default(cuid())
   orderId   String
-  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   productId String
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
   quantity  Int
   price     Float
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model Promotion {
+  id             String        @id
+  name           String
+  description    String?
+  type           PromotionType
+  value          Float
+  code           String?       @unique
+  minOrderAmount Float?
+  maxDiscount    Float?
+  startDate      DateTime
+  endDate        DateTime
+  isActive       Boolean       @default(true)
+  usageLimit     Int?
+  usageCount     Int           @default(0)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime
+}
+
+model Category {
+  id          String     @id @default(cuid())
+  name        String     @unique
+  slug        String     @unique
+  description String?
+  image       String?
+  parentId    String?
+  isActive    Boolean    @default(true)
+  sortOrder   Int        @default(0)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  parent      Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children    Category[] @relation("CategoryHierarchy")
+  products    Product[]
+}
+
+model Review {
+  id         String   @id @default(cuid())
+  userId     String
+  productId  String
+  rating     Int      @db.SmallInt
+  title      String?
+  comment    String?
+  isVerified Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+}
+
+model Cart {
+  id        String     @id @default(cuid())
+  userId    String     @unique
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     CartItem[]
+}
+
+model CartItem {
+  id        String   @id @default(cuid())
+  cartId    String
+  productId String
+  quantity  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([cartId, productId])
+}
+
+model Wishlist {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+}
+
+model Address {
+  id         String      @id @default(cuid())
+  userId     String
+  type       AddressType @default(SHIPPING)
+  firstName  String
+  lastName   String
+  company    String?
+  address1   String
+  address2   String?
+  city       String
+  state      String?
+  postalCode String
+  country    String
+  phone      String?
+  isDefault  Boolean     @default(false)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model SupportTicket {
+  id          String          @id @default(cuid())
+  userId      String
+  subject     String
+  description String
+  status      TicketStatus    @default(OPEN)
+  priority    TicketPriority  @default(MEDIUM)
+  assignedTo  String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages    TicketMessage[]
+}
+
+model TicketMessage {
+  id         String        @id @default(cuid())
+  ticketId   String
+  userId     String
+  message    String
+  isInternal Boolean       @default(false)
+  createdAt  DateTime      @default(now())
+  ticket     SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 enum UserRole {
@@ -147,20 +283,21 @@ enum PromotionType {
   FREE_SHIPPING
 }
 
-model Promotion {
-  id              String        @id @default(cuid())
-  name            String
-  description     String?
-  type            PromotionType
-  value           Float
-  code            String?       @unique
-  minOrderAmount  Float?
-  maxDiscount     Float?
-  startDate       DateTime
-  endDate         DateTime
-  isActive        Boolean       @default(true)
-  usageLimit      Int?
-  usageCount      Int           @default(0)
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+enum AddressType {
+  SHIPPING
+  BILLING
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
 }

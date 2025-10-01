@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { useLanguage } from "@/hooks/use-language"
 import { Button } from "../components/ui/button"
 import { Input } from "../components/ui/input"
@@ -16,9 +16,10 @@ import {
 import { LanguageSelector } from "./language-selector"
 import { CartButton } from "./cart-button"
 import { ProfileButton } from "./profile-button"
-import { categories } from "../lib/products"
+import { fetchCategories } from "../lib/products"
 import { Search, Menu, X, Camera, Mic } from "lucide-react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 
 const isBrowser = typeof window !== "undefined"
 
@@ -36,7 +37,13 @@ const getSpeechRecognition = () => {
 
 // Check for File API support
 const isFileAPISupported = () => {
-  return isBrowser && typeof window.File !== 'undefined' && typeof window.FileReader !== 'undefined' && typeof window.FileList !== 'undefined' && typeof window.Blob !== 'undefined'
+  return (
+    isBrowser &&
+    typeof window.File !== "undefined" &&
+    typeof window.FileReader !== "undefined" &&
+    typeof window.FileList !== "undefined" &&
+    typeof window.Blob !== "undefined"
+  )
 }
 
 export function Header() {
@@ -46,13 +53,20 @@ export function Header() {
   const [isSearchFocused, setIsSearchFocused] = useState(false)
   const [isListening, setIsListening] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const router = useRouter()
+  const [cats, setCats] = useState<{ id: string; name?: string; icon?: string }[]>([])
+
+  useEffect(() => {
+    (async () => {
+      const c = await fetchCategories()
+      setCats(c)
+    })()
+  }, [])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     if (searchQuery.trim()) {
-      if (isBrowser) {
-        window.location.href = `/search?q=${encodeURIComponent(searchQuery)}`
-      }
+      router.push(`/search?q=${encodeURIComponent(searchQuery)}`)
     }
   }
 
@@ -66,32 +80,44 @@ export function Header() {
     }
 
     try {
-      // Create a temporary URL for image preview (with fallback)
-      let imageUrl: string | null = null
+      // Upload image to server for real image search
+      const formData = new FormData()
+      formData.append('image', file)
 
-      if (window.URL && typeof window.URL.createObjectURL !== 'undefined') {
-        imageUrl = URL.createObjectURL(file)
-      } else if ((window as any).webkitURL) {
-        imageUrl = (window as any).webkitURL.createObjectURL(file)
-      }
+      const response = await fetch('/api/search/image', {
+        method: 'POST',
+        body: formData
+      })
 
-      // Simulate image search based on filename
-      const searchTerm = file.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ")
-      setSearchQuery(searchTerm)
-
-      // Clean up the temporary URL
-      if (imageUrl) {
-        setTimeout(() => {
-          if (window.URL && typeof window.URL.revokeObjectURL !== 'undefined') {
-            URL.revokeObjectURL(imageUrl!)
-          } else if ((window as any).webkitURL) {
-            ;(window as any).webkitURL.revokeObjectURL(imageUrl!)
-          }
-        }, 1000)
+      if (response.ok) {
+        const data = await response.json()
+        // If API returns direct product matches, navigate with a special flag to show them
+        if (Array.isArray(data.products) && data.products.length > 0) {
+          sessionStorage.setItem('imageSearchResults', JSON.stringify(data.products))
+          router.push(`/search?q=${encodeURIComponent(data.searchTerm || '')}&mode=image`)
+          return
+        }
+        const term = data.searchTerm || ''
+        setSearchQuery(term)
+        if (term) {
+          router.push(`/search?q=${encodeURIComponent(term)}`)
+        }
+      } else {
+        // Fallback: use filename for search
+        const searchTerm = file.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ")
+        setSearchQuery(searchTerm)
+        if (searchTerm) {
+          router.push(`/search?q=${encodeURIComponent(searchTerm)}`)
+        }
       }
     } catch (error) {
       console.error("Image search error:", error)
-      alert("Erreur lors du traitement de l'image")
+      // Fallback: use filename for search
+      const searchTerm = file.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ")
+      setSearchQuery(searchTerm)
+      if (searchTerm) {
+        router.push(`/search?q=${encodeURIComponent(searchTerm)}`)
+      }
     }
   }
 
@@ -171,7 +197,7 @@ export function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/100">
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/100 relative">
       <div className="container mx-auto">
         <div className="flex h-16 items-center px-4">
           {/* Logo - LEFT */}
@@ -185,20 +211,22 @@ export function Header() {
           </div>
 
           {/* Desktop Navigation - Hidden on mobile */}
-          <NavigationMenu className="hidden lg:flex ml-6">
+          <NavigationMenu className="hidden lg:flex ml-6 z-50">
             <NavigationMenuList>
               <NavigationMenuItem>
-                <NavigationMenuTrigger>{t("categories")}</NavigationMenuTrigger>
-                <NavigationMenuContent>
-                  <div className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
-                    {categories.map((category) => (
+                <NavigationMenuTrigger className="bg-transparent hover:bg-accent">
+                  {t("categories")}
+                </NavigationMenuTrigger>
+                <NavigationMenuContent className="min-w-[560px] md:w-[600px] z-50 overflow-visible">
+                  <div className="grid w-full gap-3 p-4 md:grid-cols-2">
+                    {cats.map((category) => (
                       <Link
                         key={category.id}
-                        href={`/category/${category.id}`}
+                        href={`/search?category=${encodeURIComponent(category.id)}`}
                         className="flex items-center space-x-3 rounded-md p-3 hover:bg-accent cursor-pointer transition-colors"
                       >
-                        <span className="text-2xl">{category.icon}</span>
-                        <span className="font-medium">{t(category.id as any)}</span>
+                        {category.icon && <span className="text-2xl">{category.icon}</span>}
+                        <span className="font-medium">{category.name || t(category.id as any)}</span>
                       </Link>
                     ))}
                   </div>
@@ -330,15 +358,15 @@ export function Header() {
                   {t("categories")}
                 </h3>
                 <div className="grid gap-2">
-                  {categories.map((category) => (
+                  {cats.map((category) => (
                     <Link
                       key={category.id}
-                      href={`/category/${category.id}`}
+                      href={`/search?category=${encodeURIComponent(category.id)}`}
                       className="flex items-center space-x-3 rounded-md p-3 hover:bg-accent cursor-pointer transition-colors"
                       onClick={() => setIsMenuOpen(false)}
                     >
-                      <span className="text-xl">{category.icon}</span>
-                      <span>{t(category.id as any)}</span>
+                      {category.icon && <span className="text-xl">{category.icon}</span>}
+                      <span>{category.name || t(category.id as any)}</span>
                     </Link>
                   ))}
                 </div>

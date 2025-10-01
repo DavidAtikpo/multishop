@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
           ],
         },
         include: {
-          orderItems: {
+          items: {
             include: {
               product: true,
             },
@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
       order = await prisma.order.findFirst({
         where: { trackingNumber },
         include: {
-          orderItems: {
+          items: {
             include: {
               product: true,
             },
@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-function generateTrackingEvents(status: string, createdAt: string, shippingAddress: string) {
+function generateTrackingEvents(status: string, createdAt: Date, shippingAddress: string | null) {
   const events = []
   const orderDate = new Date(createdAt)
 
@@ -123,7 +123,7 @@ function generateTrackingEvents(status: string, createdAt: string, shippingAddre
       id: "5",
       status: "delivered",
       description: "Colis livré avec succès",
-      location: shippingAddress.split(",")[1]?.trim() || "Destination",
+      location: (shippingAddress || "").split(",")[1]?.trim() || "Destination",
       timestamp: deliveredDate.toISOString(),
     })
   }

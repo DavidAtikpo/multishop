@@ -515,7 +515,7 @@ export default function PromotionsPage() {
                         <Switch
                           checked={promotion.isActive}
                           onCheckedChange={(checked) => toggleActive(promotion.id, checked)}
-                          size="sm"
+                          className="h-4 w-8"
                         />
                         <Badge variant={promotion.isActive ? "default" : "secondary"}>
                           {promotion.isActive ? "Active" : "Inactive"}

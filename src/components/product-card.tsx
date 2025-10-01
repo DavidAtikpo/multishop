@@ -28,11 +28,7 @@ export function ProductCard({ product }: ProductCardProps) {
       <CardContent className="p-4">
         <div className="relative aspect-square mb-4 overflow-hidden rounded-md">
           <Image
-            src={
-              (product.images && product.images.length > 0) 
-                ? product.images[0] 
-                : product.image || "/placeholder.svg"
-            }
+            src={product.image || "/placeholder.svg"}
             alt={product.name}
             fill
             className="object-cover group-hover:scale-105 transition-transform duration-300"

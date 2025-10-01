@@ -6,17 +6,27 @@ const prisma = new PrismaClient()
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { name, email, subject, category, priority, message } = body
+    const { name, email, subject, priority, message } = body
+
+    // Resolve or create user by email (guest support)
+    if (!email) {
+      return NextResponse.json({ error: "Email requis" }, { status: 400 })
+    }
+
+    const user = await prisma.user.upsert({
+      where: { email },
+      update: { name: name || undefined },
+      create: { email, name: name || undefined },
+      select: { id: true },
+    })
 
     const ticket = await prisma.supportTicket.create({
       data: {
-        customerName: name,
-        customerEmail: email,
+        userId: user.id,
         subject,
-        category,
-        priority,
-        message,
-        status: "open",
+        description: message,
+        priority: (priority?.toUpperCase?.() as any) || "MEDIUM",
+        status: "OPEN",
       },
     })
 
@@ -37,7 +47,7 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get("status")
 
     const where: any = {}
-    if (email) where.customerEmail = email
+    if (email) where.user = { is: { email } }
     if (status) where.status = status
 
     const tickets = await prisma.supportTicket.findMany({

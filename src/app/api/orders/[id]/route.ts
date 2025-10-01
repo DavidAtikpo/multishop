@@ -3,12 +3,13 @@ import { PrismaClient } from "@prisma/client"
 
 const prisma = new PrismaClient()
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
     const order = await prisma.order.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
-        orderItems: {
+        items: {
           include: {
             product: true,
           },
@@ -27,19 +28,20 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const body = await request.json()
     const { status, trackingNumber } = body
 
+    const { id } = await params
     const order = await prisma.order.update({
-      where: { id: params.id },
+      where: { id },
       data: {
-        status,
+        status: (typeof status === 'string' ? status.toUpperCase() : undefined) as any,
         trackingNumber: trackingNumber || undefined,
       },
       include: {
-        orderItems: {
+        items: {
           include: {
             product: true,
           },

@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useCart } from "@/hooks/use-cart"
 import { Button } from "@/components/ui/button"
@@ -22,6 +22,8 @@ export default function CheckoutPage() {
   const router = useRouter()
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
+  const [hasPrefill, setHasPrefill] = useState(false)
+  const [saveAsDefault, setSaveAsDefault] = useState(true)
 
   const [formData, setFormData] = useState({
     // Informations personnelles
@@ -42,6 +44,29 @@ export default function CheckoutPage() {
     // Notes
     notes: "",
   })
+
+  useEffect(() => {
+    const prefill = async () => {
+      try {
+        const res = await fetch("/api/account/me", { cache: "no-store" })
+        if (!res.ok) return
+        const u = await res.json()
+        setFormData((prev) => ({
+          ...prev,
+          firstName: u.name?.split(" ")?.[0] || prev.firstName,
+          lastName: u.name?.split(" ").slice(1).join(" ") || prev.lastName,
+          email: u.email || prev.email,
+          phone: u.phone || prev.phone,
+          address: u.address || prev.address,
+          city: u.city || prev.city,
+          postalCode: u.postalCode || prev.postalCode,
+          country: u.country || prev.country,
+        }))
+        setHasPrefill(!!(u.address || u.city || u.postalCode))
+      } catch {}
+    }
+    prefill()
+  }, [])
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -77,6 +102,23 @@ export default function CheckoutPage() {
 
       const order = await response.json()
 
+      if (saveAsDefault) {
+        try {
+          await fetch("/api/account/me", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              name: `${formData.firstName} ${formData.lastName}`.trim(),
+              phone: formData.phone,
+              address: formData.address,
+              city: formData.city,
+              postalCode: formData.postalCode,
+              country: formData.country,
+            }),
+          })
+        } catch {}
+      }
+
       // Rediriger vers la page de paiement
       if (formData.paymentMethod === "stripe") {
         const paymentResponse = await fetch("/api/payments/create-session", {
@@ -90,8 +132,16 @@ export default function CheckoutPage() {
           }),
         })
 
-        const { url } = await paymentResponse.json()
-        window.location.href = url
+        const { url, error } = await paymentResponse.json()
+        if (!paymentResponse.ok || !url) {
+          toast({
+            title: "Paiement indisponible",
+            description: error || "Configuration Stripe manquante. Choisissez une autre méthode ou réessayez.",
+            variant: "destructive",
+          })
+        } else {
+          window.location.href = url
+        }
       } else {
         clearCart()
         toast({
@@ -150,6 +200,11 @@ export default function CheckoutPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
+                {hasPrefill ? (
+                  <p className="text-sm text-muted-foreground">Vos informations ont été préremplies. Vous pouvez les modifier si nécessaire.</p>
+                ) : (
+                  <p className="text-sm text-muted-foreground">Entrez vos informations pour la livraison.</p>
+                )}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="firstName">Prénom *</Label>
@@ -202,6 +257,11 @@ export default function CheckoutPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
+                {hasPrefill ? (
+                  <p className="text-sm text-muted-foreground">Adresse par défaut chargée depuis votre compte. Modifiez-la pour cette commande si besoin.</p>
+                ) : (
+                  <p className="text-sm text-muted-foreground">Aucune adresse par défaut trouvée. Renseignez une adresse de livraison.</p>
+                )}
                 <div>
                   <Label htmlFor="address">Adresse *</Label>
                   <Input
@@ -286,6 +346,15 @@ export default function CheckoutPage() {
                   value={formData.notes}
                   onChange={(e) => handleInputChange("notes", e.target.value)}
                 />
+                <div className="mt-4 flex items-center gap-2">
+                  <input
+                    id="saveDefault"
+                    type="checkbox"
+                    checked={saveAsDefault}
+                    onChange={(e) => setSaveAsDefault(e.target.checked)}
+                  />
+                  <Label htmlFor="saveDefault">Enregistrer comme adresse par défaut</Label>
+                </div>
               </CardContent>
             </Card>
           </form>

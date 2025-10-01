@@ -1,5 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { PrismaClient } from "@prisma/client"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
 
 const prisma = new PrismaClient()
 
@@ -8,26 +10,47 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { items, customerInfo, totalAmount, status = "pending" } = body
 
-    // Créer la commande
-    const order = await prisma.order.create({
-      data: {
-        customerEmail: customerInfo.email,
-        customerName: `${customerInfo.firstName} ${customerInfo.lastName}`,
-        customerPhone: customerInfo.phone,
-        shippingAddress: `${customerInfo.address}, ${customerInfo.city}, ${customerInfo.postalCode}, ${customerInfo.country}`,
-        totalAmount: totalAmount,
-        status: status,
-        notes: customerInfo.notes || null,
-        orderItems: {
-          create: items.map((item: any) => ({
-            productId: item.productId,
-            quantity: item.quantity,
-            price: item.price,
-          })),
+    // Resolve user to attach to order (required by schema)
+    const session = await getServerSession(authOptions)
+    let userId: string | null = null
+    if (session?.user?.id) {
+      userId = session.user.id
+    } else if (customerInfo?.email) {
+      // Upsert a user by email for guest checkout
+      const user = await prisma.user.upsert({
+        where: { email: customerInfo.email },
+        update: {
+          name: `${customerInfo.firstName || ""} ${customerInfo.lastName || ""}`.trim() || null,
         },
+        create: {
+          email: customerInfo.email,
+          name: `${customerInfo.firstName || ""} ${customerInfo.lastName || ""}`.trim() || undefined,
+        },
+        select: { id: true },
+      })
+      userId = user.id
+    }
+
+    // Créer la commande
+    const orderData: any = {
+      shippingAddress: `${customerInfo.address}, ${customerInfo.city}, ${customerInfo.postalCode}, ${customerInfo.country}`,
+      total: totalAmount,
+      status: (typeof status === 'string' ? status.toUpperCase() : 'PENDING') as any,
+      paymentMethod: customerInfo.paymentMethod || null,
+      items: {
+        create: items.map((item: any) => ({
+          productId: item.productId,
+          quantity: item.quantity,
+          price: item.price,
+        })),
       },
+      ...(userId ? { user: { connect: { id: userId } } } : {}),
+    }
+
+    const order = await prisma.order.create({
+      data: orderData,
       include: {
-        orderItems: {
+        items: {
           include: {
             product: true,
           },
@@ -50,24 +73,26 @@ export async function GET(request: NextRequest) {
     let orders
     if (email) {
       orders = await prisma.order.findMany({
-        where: { customerEmail: email },
+        where: { user: { is: { email } } },
         include: {
-          orderItems: {
+          items: {
             include: {
               product: true,
             },
           },
+          user: true,
         },
         orderBy: { createdAt: "desc" },
       })
     } else {
       orders = await prisma.order.findMany({
         include: {
-          orderItems: {
+          items: {
             include: {
               product: true,
             },
           },
+          user: true,
         },
         orderBy: { createdAt: "desc" },
       })

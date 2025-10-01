@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { LayoutDashboard, Package, ShoppingCart, Percent, MessageSquare, Menu, Plus } from "lucide-react"
 import { cn } from "@/lib/utils"
-
+import { Header } from "@/components/header"
+import { Footer } from "@/components/footer"
 const navigation = [
   {
     name: "Tableau de bord",
@@ -47,6 +48,7 @@ export default function VendorLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   return (
+    <>
     <div className="min-h-screen bg-background">
       {/* Mobile sidebar */}
       <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
@@ -132,5 +134,6 @@ export default function VendorLayout({
         <main className="py-4">{children}</main>
       </div>
     </div>
+    </>
   )
 }

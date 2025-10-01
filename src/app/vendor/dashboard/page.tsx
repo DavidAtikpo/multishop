@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import {
@@ -635,6 +636,7 @@ export default function VendorDashboard() {
         </TabsContent>
 
         <TabsContent value="products" className="space-y-4">
+      
           <div className="flex justify-between items-center">
             <h2 className="text-2xl font-bold">Mes Produits</h2>
             <div className="flex gap-2">

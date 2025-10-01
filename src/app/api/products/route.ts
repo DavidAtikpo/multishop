@@ -39,18 +39,10 @@ export async function GET(request: NextRequest) {
           description: true,
           price: true,
           image: true,
-          images: true,
           category: true,
           inStock: true,
           rating: true,
           reviews: true,
-          brand: true,
-          views: true,
-          vendor: {
-            select: {
-              storeName: true,
-            },
-          },
         },
       }),
       prisma.product.count({ where: whereConditions }),

@@ -4,7 +4,7 @@ import { useLanguage } from "@/hooks/use-language"
 import { useSession, signOut } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu"
-import { User, LogIn, UserPlus, Settings, LogOut } from "lucide-react"
+import { User, LogIn, UserPlus, Settings, LogOut, ShoppingBag } from "lucide-react"
 import Link from "next/link"
 
 export function ProfileButton() {
@@ -35,6 +35,12 @@ export function ProfileButton() {
             {session.user?.name || session.user?.email}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
+          <DropdownMenuItem asChild>
+            <Link href="/account">
+              <ShoppingBag className="mr-2 h-4 w-4" />
+              {t("orders")}
+            </Link>
+          </DropdownMenuItem>
           <DropdownMenuItem>
             <Settings className="mr-2 h-4 w-4" />
             {t("settings")}

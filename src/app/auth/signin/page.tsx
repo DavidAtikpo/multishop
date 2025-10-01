@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { signIn, getSession } from "next-auth/react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { FcGoogle } from "react-icons/fc"
 import { FaFacebook } from "react-icons/fa"
@@ -17,6 +17,24 @@ export default function SignInPage() {
   const [error, setError] = useState("")
   const router = useRouter()
   const { t } = useLanguage()
+  const searchParams = useSearchParams()
+
+  const mapNextAuthError = (code?: string | null) => {
+    switch (code) {
+      case "CredentialsSignin":
+        return "Invalid credentials"
+      case "OAuthAccountNotLinked":
+        return "Email already used with different sign-in method"
+      case "AccessDenied":
+        return "Access denied"
+      default:
+        return code ? "Authentication error" : ""
+    }
+  }
+
+  // Show error from callback URL if present
+  const urlError = mapNextAuthError(searchParams?.get("error"))
+  
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -31,9 +49,18 @@ export default function SignInPage() {
       })
 
       if (result?.error) {
-        setError("Invalid credentials")
+        setError(mapNextAuthError(result.error))
       } else {
-        router.push("/")
+        // Fetch session to get role
+        const s = await getSession()
+        const role = (s?.user as any)?.role as string | undefined
+        if (role === "VENDOR") {
+          router.push("/vendor/dashboard")
+        } else if (role === "ADMIN") {
+          router.push("/admin/dashboard")
+        } else {
+          router.push("/account")
+        }
         router.refresh()
       }
     } catch (error) {
@@ -52,6 +79,11 @@ export default function SignInPage() {
           </CardHeader>
           <CardContent className="px-4 sm:px-6">
             <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
+              {(error || urlError) && (
+                <div className="text-red-500 text-xs sm:text-sm text-center">
+                  {error || urlError}
+                </div>
+              )}
               <div>
                 <Input
                   type="email"
@@ -72,9 +104,6 @@ export default function SignInPage() {
                   required
                 />
               </div>
-              {error && (
-                <div className="text-red-500 text-xs sm:text-sm text-center">{error}</div>
-              )}
               <Button type="submit" className="w-full h-10 sm:h-11" disabled={isLoading}>
                 {isLoading ? "Signing in..." : t("signIn")}
               </Button>

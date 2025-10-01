@@ -27,3 +27,5 @@ const wrappedHandler = async (req: Request, context: any) => {
 
 export { wrappedHandler as GET, wrappedHandler as POST }
 
+
+

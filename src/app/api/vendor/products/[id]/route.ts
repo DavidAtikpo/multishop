@@ -3,8 +3,9 @@ import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
     const session = await getServerSession(authOptions)
 
     if (!session || session.user.role !== "VENDOR") {
@@ -26,7 +27,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     // Update product (only if it belongs to this vendor)
     const product = await prisma.product.updateMany({
       where: {
-        id: params.id,
+        id,
         vendorId: vendor.id,
       },
       data: {
@@ -50,8 +51,9 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
     const session = await getServerSession(authOptions)
 
     if (!session || session.user.role !== "VENDOR") {
@@ -70,7 +72,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     // Delete product (only if it belongs to this vendor)
     const product = await prisma.product.deleteMany({
       where: {
-        id: params.id,
+        id,
         vendorId: vendor.id,
       },
     })
