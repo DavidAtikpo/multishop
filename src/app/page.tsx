@@ -14,7 +14,7 @@ export default function HomePage() {
         <ShippingBanner />
         <Header />
         <main className="flex-1">
-          <HeroSection />
+          {/* <HeroSection /> */}
           <ProductGrid />
         </main>
         <SubscribeFollow />
