@@ -309,6 +309,8 @@ export default function EditProductPage() {
                     <SelectItem value="electronics">Électronique</SelectItem>
                     <SelectItem value="clothing">Vêtements</SelectItem>
                     <SelectItem value="home">Maison & Jardin</SelectItem>
+                    <SelectItem value="food">Alimentaire</SelectItem>
+                    <SelectItem value="household">Maison & Energie/Chauffage</SelectItem>
                     <SelectItem value="sports">Sports & Loisirs</SelectItem>
                     <SelectItem value="books">Livres</SelectItem>
                     <SelectItem value="wood">Bois</SelectItem>

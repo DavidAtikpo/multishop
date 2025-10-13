@@ -31,15 +31,15 @@ export function CartButton() {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-80">
         {items.length === 0 ? (
-          <div className="p-4 text-center text-muted-foreground">
+          <div className="p-3 text-center text-muted-foreground">
             {t("cartEmpty")}
           </div>
         ) : (
-          <div className="p-4">
-            <div className="space-y-4">
+          <div className="p-3">
+            <div className="space-y-3">
               {items.map((item) => (
-                <div key={item.id} className="flex items-center space-x-3">
-                  <div className="relative h-12 w-12 rounded-md overflow-hidden">
+                <div key={item.id} className="flex items-center space-x-2">
+                  <div className="relative h-10 w-10 rounded-md overflow-hidden">
                     <Image
                       src={item.image || "/placeholder.svg"}
                       alt={item.name}
@@ -48,45 +48,45 @@ export function CartButton() {
                     />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="text-sm font-medium truncate">{item.name}</h4>
-                    <p className="text-sm text-muted-foreground">€{item.price.toFixed(2)}</p>
+                    <h4 className="text-xs font-medium truncate">{item.name}</h4>
+                    <p className="text-xs text-muted-foreground">€{item.price.toFixed(2)}</p>
                   </div>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-1">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                      className="h-6 w-6 p-0"
+                      className="h-5 w-5 p-0"
                     >
-                      <Minus className="h-3 w-3" />
+                      <Minus className="h-2.5 w-2.5" />
                     </Button>
-                    <span className="text-sm w-6 text-center">{item.quantity}</span>
+                    <span className="text-xs w-5 text-center">{item.quantity}</span>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                      className="h-6 w-6 p-0"
+                      className="h-5 w-5 p-0"
                     >
-                      <Plus className="h-3 w-3" />
+                      <Plus className="h-2.5 w-2.5" />
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => removeFromCart(item.id)}
-                      className="h-6 w-6 p-0 text-destructive"
+                      className="h-5 w-5 p-0 text-destructive"
                     >
-                      <Trash2 className="h-3 w-3" />
+                      <Trash2 className="h-2.5 w-2.5" />
                     </Button>
                   </div>
                 </div>
               ))}
             </div>
-            <div className="border-t pt-4 mt-4">
+            <div className="border-t pt-3 mt-3">
               <div className="flex justify-between items-center mb-2">
-                <span className="font-medium">{t("total")}:</span>
-                <span className="font-bold">€{totalPrice.toFixed(2)}</span>
+                <span className="text-sm font-medium">{t("total")}:</span>
+                <span className="text-sm font-bold">€{totalPrice.toFixed(2)}</span>
               </div>
-              <Button asChild className="w-full">
+              <Button asChild size="sm" className="w-full h-8 text-xs">
                 <Link href="/checkout">{t("checkout")}</Link>
               </Button>
             </div>

@@ -218,15 +218,15 @@ export function Header() {
                   {t("categories")}
                 </NavigationMenuTrigger>
                 <NavigationMenuContent className="min-w-[560px] md:w-[600px] z-50 overflow-visible">
-                  <div className="grid w-full gap-3 p-4 md:grid-cols-2">
+                  <div className="grid w-full gap-1 p-3 md:grid-cols-2">
                     {cats.map((category) => (
                       <Link
                         key={category.id}
                         href={`/search?category=${encodeURIComponent(category.id)}`}
-                        className="flex items-center space-x-3 rounded-md p-3 hover:bg-accent cursor-pointer transition-colors"
+                        className="flex items-center space-x-2 rounded-md p-2 hover:bg-accent cursor-pointer transition-colors"
                       >
-                        {category.icon && <span className="text-2xl">{category.icon}</span>}
-                        <span className="font-medium">{category.name || t(category.id as any)}</span>
+                        {category.icon && <span className="text-lg">{category.icon}</span>}
+                        <span className="font-medium text-sm">{category.name || t(category.id as any)}</span>
                       </Link>
                     ))}
                   </div>
@@ -357,16 +357,16 @@ export function Header() {
                 <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
                   {t("categories")}
                 </h3>
-                <div className="grid gap-2">
+                <div className="grid gap-1">
                   {cats.map((category) => (
                     <Link
                       key={category.id}
                       href={`/search?category=${encodeURIComponent(category.id)}`}
-                      className="flex items-center space-x-3 rounded-md p-3 hover:bg-accent cursor-pointer transition-colors"
+                      className="flex items-center space-x-2 rounded-md p-2 hover:bg-accent cursor-pointer transition-colors"
                       onClick={() => setIsMenuOpen(false)}
                     >
-                      {category.icon && <span className="text-xl">{category.icon}</span>}
-                      <span>{category.name || t(category.id as any)}</span>
+                      {category.icon && <span className="text-lg">{category.icon}</span>}
+                      <span className="text-sm">{category.name || t(category.id as any)}</span>
                     </Link>
                   ))}
                 </div>

@@ -87,6 +87,19 @@ export default function ProductDetailPage() {
           const data = await response.json()
           setProduct(data)
           
+          // Incrémenter les vues du produit
+          try {
+            await fetch(`/api/products/${params.id}/views`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+            })
+            console.log('Product views incremented for:', data.name)
+          } catch (error) {
+            console.error('Error incrementing product views:', error)
+          }
+          
           const recent = JSON.parse(localStorage.getItem('recentProducts') || '[]')
           const updatedRecent = [data, ...recent.filter((p: Product) => p.id !== data.id)].slice(0, 4)
           localStorage.setItem('recentProducts', JSON.stringify(updatedRecent))
@@ -312,6 +325,11 @@ export default function ProductDetailPage() {
                 <span className="text-[10px] sm:text-xs font-medium text-gray-700">{product.rating}</span>
                 <span className="text-gray-500 text-[10px]">|</span>
                 <span className="text-[10px] sm:text-xs text-gray-600">{product.reviews} {t("reviews")}</span>
+                <span className="text-gray-500 text-[10px]">|</span>
+                <div className="flex items-center gap-0.5">
+                  <Eye className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-gray-500" />
+                  <span className="text-[10px] sm:text-xs text-gray-600">{product.views || 0} vues</span>
+                </div>
               </div>
 
               <div className="flex items-baseline gap-1 md:gap-3 mb-1.5 md:mb-3 flex-wrap">
@@ -512,6 +530,10 @@ export default function ProductDetailPage() {
                     <div className="flex justify-between py-1">
                       <span className="font-medium text-gray-700">Dimensions</span>
                       <span className="text-gray-900">{product.dimensions || 'Non spécifiées'}</span>
+                    </div>
+                    <div className="flex justify-between py-1">
+                      <span className="font-medium text-gray-700">Vues</span>
+                      <span className="text-gray-900">{product.views || 0}</span>
                     </div>
                   </div>
                 </div>
