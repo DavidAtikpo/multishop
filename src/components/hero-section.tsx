@@ -1,8 +1,68 @@
 "use client"
 
-import { ArrowRight, Star, Shield, Truck, Zap } from "lucide-react"
+import { useState, useEffect } from "react"
+import { ArrowRight, Star, Shield, Truck, Zap, ChevronLeft, ChevronRight } from "lucide-react"
+import Image from "next/image"
+import Link from "next/link"
+import { translateProductName } from "@/lib/product-translations"
+import { useLanguage } from "@/hooks/use-language"
+
+interface Product {
+  id: string
+  name: string
+  price: number
+  image: string
+  inStock: boolean
+  rating: number
+  reviews: number
+}
 
 export function HeroSection() {
+  const { language } = useLanguage()
+  const [products, setProducts] = useState<Product[]>([])
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const [loading, setLoading] = useState(true)
+
+  // Charger les produits
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await fetch('/api/products?limit=6')
+        if (response.ok) {
+          const data = await response.json()
+          setProducts(data.products || [])
+        }
+      } catch (error) {
+        console.error('Error fetching products:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchProducts()
+  }, [])
+
+  // Défilement automatique
+  useEffect(() => {
+    if (products.length <= 1) return
+
+    const interval = setInterval(() => {
+      setCurrentIndex((prevIndex) => (prevIndex + 1) % products.length)
+    }, 4000) // Change toutes les 4 secondes
+
+    return () => clearInterval(interval)
+  }, [products.length])
+
+  const nextProduct = () => {
+    setCurrentIndex((prevIndex) => (prevIndex + 1) % products.length)
+  }
+
+  const prevProduct = () => {
+    setCurrentIndex((prevIndex) => (prevIndex - 1 + products.length) % products.length)
+  }
+
+  const currentProduct = products[currentIndex]
+
   return (
     <section className="relative bg-gradient-to-br from-blue-50 via-white to-indigo-50 py-3 md:py-6 overflow-hidden">
       {/* Background decoration - minimal */}
@@ -25,58 +85,104 @@ export function HeroSection() {
             <p className="text-xs md:text-base text-gray-600 mb-3 md:mb-4 max-w-lg mx-auto lg:mx-0 leading-relaxed">
               Une sélection unique de produits haut de gamme pour transformer votre quotidien.
             </p>
-            
-            <div className="flex flex-col sm:flex-row gap-2 md:gap-3 justify-center lg:justify-start mb-3 md:mb-4">
-              <button className="inline-flex items-center justify-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 md:px-6 md:py-2.5 rounded-lg font-semibold text-xs md:text-sm transition-all hover:scale-105 shadow-lg">
-                Acheter maintenant
-                <ArrowRight className="h-3 w-3 md:h-4 md:w-4" />
-              </button>
-              <button className="inline-flex items-center justify-center px-4 py-2 md:px-6 md:py-2.5 border border-gray-300 hover:border-blue-500 text-gray-700 rounded-lg font-medium text-xs md:text-sm transition-all hover:bg-gray-50">
-                Découvrir
-              </button>
-            </div>
-            
-            {/* Features - ultra compact */}
-            <div className="grid grid-cols-3 gap-1 md:gap-2 text-xs">
-              <div className="flex items-center gap-1 justify-center lg:justify-start">
-                <Truck className="h-2.5 w-2.5 md:h-3 md:w-3 text-blue-600" />
-                <span className="text-xs">Livraison gratuite</span>
-              </div>
-              <div className="flex items-center gap-1 justify-center lg:justify-start">
-                <Shield className="h-2.5 w-2.5 md:h-3 md:w-3 text-blue-600" />
-                <span className="text-xs">Garantie 2 ans</span>
-              </div>
-              <div className="flex items-center gap-1 justify-center lg:justify-start">
-                <Zap className="h-2.5 w-2.5 md:h-3 md:w-3 text-blue-600" />
-                <span className="text-xs">Livraison rapide</span>
-              </div>
-            </div>
+      
           </div>
           
-          {/* Right content - very small on mobile */}
+          {/* Right content - Product carousel */}
           <div className="relative mt-3 lg:mt-0">
-            <div className="relative bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg p-2 md:p-4">
-              {/* Featured product image - tiny on mobile */}
-              <div className="relative aspect-square max-w-[200px] md:max-w-xs mx-auto">
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-200/30 to-purple-200/30 rounded-lg blur-md"></div>
-                <div className="relative bg-white rounded-lg p-2 md:p-4 shadow-lg flex items-center justify-center">
-                  {/* Placeholder product */}
-                  <div className="w-full h-full bg-gray-100 rounded-md flex items-center justify-center">
-                    <div className="w-10 h-10 md:w-16 md:h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-md flex items-center justify-center">
-                      <Zap className="h-5 w-5 md:h-8 md:w-8 text-white" />
+            {loading ? (
+              <div className="relative bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg p-3 md:p-6">
+                <div className="relative aspect-square w-full max-w-[250px] md:max-w-sm mx-auto">
+                  <div className="relative bg-white rounded-lg p-1 md:p-2 shadow-lg flex items-center justify-center h-full">
+                    <div className="w-12 h-12 md:w-20 md:h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-md flex items-center justify-center animate-pulse">
+                      <Zap className="h-6 w-6 md:h-10 md:w-10 text-white" />
                     </div>
                   </div>
                 </div>
               </div>
-              
-              {/* Floating elements - tiny */}
-              <div className="absolute -top-1 -right-1 bg-red-500 text-white px-1.5 py-0.5 rounded-full text-xs font-medium animate-pulse">
-                -30%
+            ) : currentProduct ? (
+              <div className="relative bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg p-3 md:p-6">
+                <Link href={`/products/${currentProduct.id}`}>
+                  <div className="relative aspect-square w-full max-w-[250px] md:max-w-sm mx-auto group cursor-pointer">
+                    <div className="absolute inset-0 bg-gradient-to-br from-blue-200/30 to-purple-200/30 rounded-lg blur-md group-hover:blur-lg transition-all duration-300"></div>
+                    <div className="relative bg-white rounded-lg p-1 md:p-2 shadow-lg group-hover:shadow-xl transition-all duration-300 h-full">
+                      <Image
+                        src={currentProduct.image || "/placeholder.svg"}
+                        alt={translateProductName(currentProduct.name, language)}
+                        fill
+                        sizes="(max-width: 768px) 250px, 400px"
+                        className="object-cover rounded-md group-hover:scale-105 transition-transform duration-300"
+                        priority
+                      />
+                    </div>
+                  </div>
+                </Link>
+                
+                {/* Product info */}
+                <div className="mt-2 text-center">
+                  <h3 className="text-xs md:text-sm font-medium text-gray-900 line-clamp-2 mb-1">
+                    {translateProductName(currentProduct.name, language)}
+                  </h3>
+                  <div className="flex items-center justify-center gap-1 mb-1">
+                    <div className="flex items-center">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`h-2 w-2 md:h-3 md:w-3 ${
+                            i < Math.floor(currentProduct.rating) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <span className="text-[8px] md:text-xs text-gray-500">({currentProduct.reviews})</span>
+                  </div>
+                  <p className="text-xs md:text-sm font-bold text-blue-600">€{currentProduct.price.toFixed(2)}</p>
+                </div>
+                
+                {/* Navigation buttons */}
+                {products.length > 1 && (
+                  <>
+                    <button
+                      onClick={prevProduct}
+                      className="absolute left-1 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-1 shadow-md transition-all duration-200"
+                    >
+                      <ChevronLeft className="h-3 w-3 md:h-4 md:w-4 text-gray-600" />
+                    </button>
+                    <button
+                      onClick={nextProduct}
+                      className="absolute right-1 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-1 shadow-md transition-all duration-200"
+                    >
+                      <ChevronRight className="h-3 w-3 md:h-4 md:w-4 text-gray-600" />
+                    </button>
+                  </>
+                )}
+                
+                {/* Dots indicator */}
+                {products.length > 1 && (
+                  <div className="flex justify-center gap-1 mt-2">
+                    {products.map((_, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setCurrentIndex(index)}
+                        className={`w-1.5 h-1.5 md:w-2 md:h-2 rounded-full transition-all duration-200 ${
+                          index === currentIndex ? 'bg-blue-600' : 'bg-gray-300'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
-              <div className="absolute -bottom-1 -left-1 bg-green-500 text-white px-1.5 py-0.5 rounded-full text-xs font-medium">
-                Nouveau
+            ) : (
+              <div className="relative bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg p-3 md:p-6">
+                <div className="relative aspect-square w-full max-w-[250px] md:max-w-sm mx-auto">
+                  <div className="relative bg-white rounded-lg p-1 md:p-2 shadow-lg flex items-center justify-center h-full">
+                    <div className="w-12 h-12 md:w-20 md:h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-md flex items-center justify-center">
+                      <Zap className="h-6 w-6 md:h-10 md:w-10 text-white" />
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
             
             {/* Stats cards - hidden on mobile, show on lg+ */}
             <div className="absolute -right-2 top-1/2 transform -translate-y-1/2 hidden xl:block">
