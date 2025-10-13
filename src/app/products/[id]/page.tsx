@@ -57,9 +57,18 @@ export default function ProductDetailPage() {
   const [isFavorite, setIsFavorite] = useState(false)
   const [recentProducts, setRecentProducts] = useState<CartProduct[]>([])
   const [similarProducts, setSimilarProducts] = useState<CartProduct[]>([])
-  const [selectedOrigin, setSelectedOrigin] = useState("Togo")
+  const [selectedCountry, setSelectedCountry] = useState("France")
+  const [selectedOrigin, setSelectedOrigin] = useState("")
   const [showOriginInfo, setShowOriginInfo] = useState(false)
   const [expandedDetails, setExpandedDetails] = useState<string | null>(null)
+
+  // Définir les provenances par pays
+  const provenanceOptions = {
+    "France": ["Paris", "Lyon", "Marseille", "Toulouse", "Nice", "Nantes", "Strasbourg", "Montpellier"],
+    "Allemagne": ["Berlin", "Munich", "Hambourg", "Cologne", "Francfort", "Stuttgart", "Düsseldorf", "Dortmund"],
+    "Espagne": ["Madrid", "Barcelone", "Valence", "Séville", "Saragosse", "Malaga", "Murcie", "Palma"],
+    "Angleterre": ["Londres", "Birmingham", "Manchester", "Liverpool", "Leeds", "Sheffield", "Bristol", "Newcastle"]
+  }
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -111,6 +120,13 @@ export default function ProductDetailPage() {
       setRecentProducts(recent.slice(0, 6))
     }
   }, [])
+
+  // Initialiser la provenance quand le pays change
+  useEffect(() => {
+    if (provenanceOptions[selectedCountry as keyof typeof provenanceOptions]?.length > 0) {
+      setSelectedOrigin(provenanceOptions[selectedCountry as keyof typeof provenanceOptions][0])
+    }
+  }, [selectedCountry])
 
   const handleAddToCart = () => {
     if (product) {
@@ -274,10 +290,10 @@ export default function ProductDetailPage() {
 
             <Card className="p-2 md:p-4 bg-gradient-to-br from-blue-50 to-indigo-50 border-2">
               <div className="space-y-2 md:space-y-3">
-                {/* Sélecteur de provenance */}
+                {/* Sélecteur de pays */}
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <label className="block text-[10px] sm:text-xs font-semibold">Provenance</label>
+                    <label className="block text-[10px] sm:text-xs font-semibold">Pays</label>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -288,19 +304,35 @@ export default function ProductDetailPage() {
                     </Button>
                   </div>
                   <select
+                    value={selectedCountry}
+                    onChange={(e) => setSelectedCountry(e.target.value)}
+                    className="w-full p-1 text-[10px] sm:text-xs border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="France">France</option>
+                    <option value="Allemagne">Allemagne</option>
+                    <option value="Espagne">Espagne</option>
+                    <option value="Angleterre">Angleterre</option>
+                  </select>
+                </div>
+
+                {/* Sélecteur de provenance */}
+                <div>
+                  <label className="block text-[10px] sm:text-xs font-semibold mb-1">Provenance</label>
+                  <select
                     value={selectedOrigin}
                     onChange={(e) => setSelectedOrigin(e.target.value)}
                     className="w-full p-1 text-[10px] sm:text-xs border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
-                    <option value="Togo">Togo - Livraison nationale</option>
-                    <option value="Afrique-Ouest">Afrique de l'Ouest</option>
-                    <option value="International">International</option>
+                    {provenanceOptions[selectedCountry as keyof typeof provenanceOptions]?.map((city) => (
+                      <option key={city} value={city}>{city}</option>
+                    ))}
                   </select>
                   {showOriginInfo && (
                     <div className="mt-1 p-1.5 bg-blue-50 border border-blue-200 rounded-md text-[10px] text-blue-800">
-                      <p><strong>Togo:</strong> Livraison gratuite sous 2-3 jours</p>
-                      <p><strong>Afrique de l'Ouest:</strong> 5-10 jours, frais de port selon destination</p>
-                      <p><strong>International:</strong> Nous consulter pour les tarifs</p>
+                      <p><strong>France:</strong> Livraison gratuite sous 2-3 jours</p>
+                      <p><strong>Allemagne:</strong> 3-5 jours, frais de port selon destination</p>
+                      <p><strong>Espagne:</strong> 4-6 jours, frais de port selon destination</p>
+                      <p><strong>Angleterre:</strong> 5-7 jours, frais de port selon destination</p>
                     </div>
                   )}
                 </div>
@@ -797,8 +829,8 @@ export default function ProductDetailPage() {
             <div className="text-center py-4">
               <Package className="h-8 w-8 mx-auto text-gray-400 mb-2" />
               <p className="text-gray-600 text-[10px]">Aucun produit similaire trouvé</p>
-            </div>
-          )}
+          </div>
+        )}
         </div>
       </div>
 
