@@ -200,11 +200,15 @@ export default function ProductDetailPage() {
   }
 
   // Utiliser les images multiples si disponibles, sinon l'image principale
-  const productImages = product.images && product.images.length > 0 
+  // Éviter les doublons et filtrer les images vides
+  const allImages = product.images && product.images.length > 0 
     ? product.images 
     : product.image 
       ? [product.image] 
       : ["/placeholder.svg"]
+  
+  // Supprimer les doublons et les images vides
+  const productImages = [...new Set(allImages.filter(img => img && img.trim() !== ''))]
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
@@ -237,7 +241,7 @@ export default function ProductDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-6 lg:gap-8 mb-4 md:mb-8">
           {/* Galerie d'images */}
           <div className="space-y-1.5 md:space-y-3">
-            <div className="aspect-[4/3] relative overflow-hidden rounded-md md:rounded-xl bg-white shadow-sm md:shadow-lg ring-1 ring-gray-200">
+            <div className="aspect-[4/3] relative overflow-hidden rounded-md md:rounded-lg bg-white shadow-sm ring-1 ring-gray-200 max-h-64 md:max-h-80">
               <Image 
                 src={productImages[selectedImage]} 
                 alt={product.name} 
@@ -253,22 +257,24 @@ export default function ProductDetailPage() {
               )}
             </div>
             
-            {/* Afficher les miniatures */}
-            <div className="grid grid-cols-4 gap-0.5 md:gap-1">
-              {productImages.map((img, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setSelectedImage(idx)}
-                  className={`aspect-square relative overflow-hidden rounded-sm transition-all ${
-                    selectedImage === idx 
-                      ? 'ring-1 md:ring-2 ring-primary shadow-sm scale-105' 
-                      : 'ring-0.5 md:ring-1 ring-gray-200 hover:ring-gray-300'
-                  }`}
-                >
-                  <Image src={img} alt={`${product.name} ${idx + 1}`} fill className="object-cover" />
-                </button>
-              ))}
-            </div>
+            {/* Afficher les miniatures - seulement si plus d'une image */}
+            {productImages.length > 1 && (
+              <div className="grid grid-cols-4 gap-0.5 md:gap-1 max-w-xs">
+                {productImages.map((img, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setSelectedImage(idx)}
+                    className={`aspect-square relative overflow-hidden rounded-sm transition-all h-12 w-12 md:h-16 md:w-16 ${
+                      selectedImage === idx 
+                        ? 'ring-1 md:ring-2 ring-primary shadow-sm scale-105' 
+                        : 'ring-0.5 md:ring-1 ring-gray-200 hover:ring-gray-300'
+                    }`}
+                  >
+                    <Image src={img} alt={`${product.name} ${idx + 1}`} fill className="object-cover" />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Informations produit */}
