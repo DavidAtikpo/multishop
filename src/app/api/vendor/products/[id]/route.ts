@@ -48,11 +48,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: "Product not found" }, { status: 404 })
     }
 
-    // Parse JSON strings back to arrays for frontend compatibility
+    // Les champs images et tags sont déjà des tableaux en PostgreSQL
     const productWithArrays = {
       ...product,
-      images: product.images ? JSON.parse(product.images) : [],
-      tags: product.tags ? JSON.parse(product.tags) : [],
+      images: product.images || [],
+      tags: product.tags || [],
     }
 
     return NextResponse.json(productWithArrays)
@@ -94,14 +94,14 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         description,
         price: Number.parseFloat(price),
         image,
-        images: images ? JSON.stringify(images) : null,
+        images: images || [],
         category,
         inStock: inStock ?? true,
         brand: brand || null,
         sku: sku || null,
         weight: weight ? Number.parseFloat(weight.toString()) : null,
         dimensions: dimensions || null,
-        tags: tags ? JSON.stringify(tags) : null,
+        tags: tags || [],
         quantity: quantity ? Number.parseInt(quantity.toString()) : 0,
       },
     })

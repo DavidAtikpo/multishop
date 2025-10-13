@@ -139,14 +139,14 @@ export async function POST(request: NextRequest) {
         description,
         price,
         image: allImages.length > 0 ? allImages[0] : null, // First image as main image
-        images: JSON.stringify(allImages), // All images as JSON string
+        images: allImages, // Images as array for PostgreSQL
         category,
         inStock: inStock ?? true,
         brand: brand || null,
         sku: sku || null,
         weight: weight ? Number.parseFloat(weight.toString()) : null,
         dimensions: dimensions || null,
-        tags: Array.isArray(tags) ? JSON.stringify(tags) : null,
+        tags: Array.isArray(tags) ? tags : [],
         quantity: quantity ? Number.parseInt(quantity.toString()) : 0,
         vendorId: vendor.id,
       },
