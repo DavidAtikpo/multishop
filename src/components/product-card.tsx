@@ -8,6 +8,7 @@ import { Badge } from "../components/ui/badge"
 import { Star, ShoppingCart, Eye } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
+import { translateProductName } from "@/lib/product-translations"
 
 interface ProductCardProps {
   product: Product
@@ -17,8 +18,8 @@ export function ProductCard({ product }: ProductCardProps) {
   const { t, language } = useLanguage()
   const { addToCart } = useCart()
   
-  // Utiliser le nom original (pas de traductions dans la base de données)
-  const translatedProductName = product.name
+  // Utiliser les traductions des noms de produits
+  const translatedProductName = translateProductName(product.name, language)
 
   const handleAddToCart = () => {
     if (product.inStock) {

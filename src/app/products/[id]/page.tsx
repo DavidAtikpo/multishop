@@ -32,6 +32,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { WhatsAppChat } from "@/components/whatsapp-chat"
 import { ProductCard } from "@/components/product-card"
+import { translateProductName } from "@/lib/product-translations"
 // import { products } from "@/lib/products" // Supprimé - on utilise l'API maintenant
 
 interface Product {
@@ -45,11 +46,18 @@ interface Product {
   inStock: boolean
   rating: number
   reviews: number
+  brand?: string
+  quantity?: number
+  tags?: string[]
+  views?: number
+  weight?: string
+  dimensions?: string
+  sku?: string
 }
 
 export default function ProductDetailPage() {
   const params = useParams()
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   const { addToCart } = useCart()
   const [product, setProduct] = useState<Product | null>(null)
   const [loading, setLoading] = useState(true)
@@ -209,6 +217,9 @@ export default function ProductDetailPage() {
   
   // Supprimer les doublons et les images vides
   const productImages = [...new Set(allImages.filter(img => img && img.trim() !== ''))]
+  
+  // Traduire le nom du produit
+  const translatedProductName = translateProductName(product.name, language)
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
@@ -244,8 +255,10 @@ export default function ProductDetailPage() {
             <div className="aspect-[4/3] relative overflow-hidden rounded-md md:rounded-lg bg-white shadow-sm ring-1 ring-gray-200 max-h-64 md:max-h-80">
               <Image 
                 src={productImages[selectedImage]} 
-                alt={product.name} 
+                alt={translatedProductName} 
                 fill 
+                priority
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 className="object-cover transition-transform hover:scale-105 duration-500" 
               />
               {!product.inStock && (
@@ -270,7 +283,7 @@ export default function ProductDetailPage() {
                         : 'ring-0.5 md:ring-1 ring-gray-200 hover:ring-gray-300'
                     }`}
                   >
-                    <Image src={img} alt={`${product.name} ${idx + 1}`} fill className="object-cover" />
+                    <Image src={img} alt={`${translatedProductName} ${idx + 1}`} fill sizes="(max-width: 768px) 25vw, 12vw" className="object-cover" />
                   </button>
                 ))}
               </div>
@@ -281,7 +294,7 @@ export default function ProductDetailPage() {
           <div className="space-y-2.5 md:space-y-4">
             <div>
               <Badge className="mb-1 text-[10px] sm:text-xs">{product.category}</Badge>
-              <h1 className="text-sm sm:text-lg md:text-2xl lg:text-3xl font-bold text-gray-900 mb-1.5">{product.name}</h1>
+              <h1 className="text-sm sm:text-lg md:text-2xl lg:text-3xl font-bold text-gray-900 mb-1.5">{translatedProductName}</h1>
               
               <div className="flex items-center gap-1 md:gap-3 mb-1.5 md:mb-3 flex-wrap">
                 <div className="flex items-center gap-0.5">
@@ -414,6 +427,9 @@ export default function ProductDetailPage() {
               <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
               <span className="text-[10px] sm:text-xs font-medium text-green-800">{t("shippingInfo")}</span>
             </div>
+            <Link href="/support" className="text-sm text-blue-600 hover:text-blue-700 underline">
+                {t("checkShippingConditions")}
+                    </Link>
           </div>
         </div>
 
@@ -440,25 +456,12 @@ export default function ProductDetailPage() {
                     <p className="mb-2">
                       {product.description || "Ce produit de qualité supérieure est conçu pour répondre à tous vos besoins. Fabriqué avec des matériaux de première qualité, il allie durabilité et performance exceptionnelle."}
                     </p>
-                    <h4 className="font-semibold mb-1.5">Caractéristiques principales :</h4>
-                    <ul className="space-y-1">
-                      <li className="flex items-start gap-1.5">
-                        <CheckCircle2 className="h-3 w-3 text-green-600 mt-0.5 flex-shrink-0" />
-                        <span>Design moderne et élégant</span>
-                      </li>
-                      <li className="flex items-start gap-1.5">
-                        <CheckCircle2 className="h-3 w-3 text-green-600 mt-0.5 flex-shrink-0" />
-                        <span>Matériaux de haute qualité</span>
-                      </li>
-                      <li className="flex items-start gap-1.5">
-                        <CheckCircle2 className="h-3 w-3 text-green-600 mt-0.5 flex-shrink-0" />
-                        <span>Facile à utiliser</span>
-                      </li>
-                      <li className="flex items-start gap-1.5">
-                        <CheckCircle2 className="h-3 w-3 text-green-600 mt-0.5 flex-shrink-0" />
-                        <span>Garantie 2 ans</span>
-                      </li>
-                    </ul>
+                    {product.tags && product.tags.length > 0 && (
+                      <div className="mb-2">
+                        <span className="font-semibold">Tags: </span>
+                        <span>{product.tags.join(', ')}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -492,19 +495,23 @@ export default function ProductDetailPage() {
                     </div>
                     <div className="flex justify-between py-1">
                       <span className="font-medium text-gray-700">SKU</span>
-                      <span className="text-gray-900 font-mono text-[9px]">{product.id}</span>
+                      <span className="text-gray-900 font-mono text-[9px]">{product.sku || product.id}</span>
                     </div>
                     <div className="flex justify-between py-1">
-                      <span className="font-medium text-gray-700">Garantie</span>
-                      <span className="text-gray-900">2 ans</span>
+                      <span className="font-medium text-gray-700">Marque</span>
+                      <span className="text-gray-900">{product.brand || 'Non spécifiée'}</span>
+                    </div>
+                    <div className="flex justify-between py-1">
+                      <span className="font-medium text-gray-700">Stock</span>
+                      <span className="text-gray-900">{product.quantity || 0} unités</span>
                     </div>
                     <div className="flex justify-between py-1">
                       <span className="font-medium text-gray-700">Poids</span>
-                      <span className="text-gray-900">2.5 kg</span>
+                      <span className="text-gray-900">{product.weight || 'Non spécifié'}</span>
                     </div>
                     <div className="flex justify-between py-1">
                       <span className="font-medium text-gray-700">Dimensions</span>
-                      <span className="text-gray-900">30 × 20 × 15 cm</span>
+                      <span className="text-gray-900">{product.dimensions || 'Non spécifiées'}</span>
                     </div>
                   </div>
                 </div>
@@ -526,24 +533,6 @@ export default function ProductDetailPage() {
               </button>
               {expandedDetails === "reviews" && (
                 <div className="px-3 pb-3 border-t">
-                  <div className="pt-2 space-y-2">
-                    {[1, 2, 3].map((review) => (
-                      <div key={review} className="p-2 bg-gray-50 rounded-md">
-                        <div className="flex items-center gap-1.5 mb-1">
-                          <div className="flex">
-                            {[...Array(5)].map((_, i) => (
-                              <Star key={i} className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />
-                            ))}
-                          </div>
-                          <span className="font-medium text-[10px]">Client {review}</span>
-                        </div>
-                        <p className="text-[10px] text-gray-600 mb-0.5">Acheté le {new Date().toLocaleDateString('fr-FR')}</p>
-                        <p className="text-[10px] text-gray-700">
-                          Excellent produit ! La qualité est au rendez-vous.
-                        </p>
-                      </div>
-                    ))}
-                  </div>
                 </div>
               )}
             </Card>
@@ -561,44 +550,6 @@ export default function ProductDetailPage() {
                   <ChevronDown className="h-3.5 w-3.5 text-gray-500" />
                 )}
               </button>
-              {expandedDetails === "shipping" && (
-                <div className="px-3 pb-3 border-t">
-                  <div className="pt-2 space-y-2">
-                    <div className="p-2 bg-blue-50 border border-blue-200 rounded-md">
-                      <div className="flex items-start gap-1.5">
-                        <Info className="h-3.5 w-3.5 text-blue-600 flex-shrink-0 mt-0.5" />
-                        <div>
-                          <h4 className="font-semibold text-[10px] mb-0.5">Livraison standard</h4>
-                          <p className="text-[10px] text-gray-700 mb-0.5">Livraison sous 2-5 jours ouvrables</p>
-                          <p className="text-[9px] text-gray-600">Gratuite pour les commandes de plus de 50€</p>
-                        </div>
-                      </div>
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-[10px] mb-1.5">Zones de livraison</h4>
-                      <ul className="space-y-1 text-[10px] text-gray-700">
-                        <li className="flex items-center gap-1.5">
-                          <CheckCircle2 className="h-3 w-3 text-green-600 flex-shrink-0" />
-                          <span>Togo - Livraison nationale</span>
-                        </li>
-                        <li className="flex items-center gap-1.5">
-                          <CheckCircle2 className="h-3 w-3 text-green-600 flex-shrink-0" />
-                          <span>Afrique de l'Ouest - 5-10 jours</span>
-                        </li>
-                        <li className="flex items-center gap-1.5">
-                          <CheckCircle2 className="h-3 w-3 text-green-600 flex-shrink-0" />
-                          <span>International - Nous consulter</span>
-                        </li>
-                      </ul>
-                      <div className="mt-2 pt-1.5 border-t">
-                        <Link href="/support" className="text-[10px] text-blue-600 hover:text-blue-700 underline">
-                          Consultez nos conditions de livraison
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
             </Card>
           </div>
 
@@ -626,25 +577,12 @@ export default function ProductDetailPage() {
                 <p className="text-gray-700 text-sm md:text-base leading-relaxed mb-4">
                   {product.description || "Ce produit de qualité supérieure est conçu pour répondre à tous vos besoins. Fabriqué avec des matériaux de première qualité, il allie durabilité et performance exceptionnelle."}
                 </p>
-                <h4 className="text-base md:text-lg font-semibold mb-2">Caractéristiques principales :</h4>
-                <ul className="space-y-2 text-gray-700 text-sm md:text-base">
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-                    <span>Design moderne et élégant qui s'adapte à tous les intérieurs</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-                    <span>Matériaux de haute qualité garantissant une longue durée de vie</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-                    <span>Facile à utiliser avec une ergonomie optimisée</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-                    <span>Garantie constructeur de 2 ans incluse</span>
-                  </li>
-                </ul>
+                {product.tags && product.tags.length > 0 && (
+                  <div className="mb-4">
+                    <span className="font-semibold text-sm md:text-base">Tags: </span>
+                    <span className="text-sm md:text-base">{product.tags.join(', ')}</span>
+                  </div>
+                )}
               </div>
             </TabsContent>
             
@@ -664,96 +602,38 @@ export default function ProductDetailPage() {
                   </div>
                   <div className="flex justify-between py-2 border-b text-sm">
                     <span className="font-semibold text-gray-700">SKU</span>
-                    <span className="text-gray-900 font-mono text-xs">{product.id}</span>
+                    <span className="text-gray-900 font-mono text-xs">{product.sku || product.id}</span>
                   </div>
                   <div className="flex justify-between py-2 border-b text-sm">
-                    <span className="font-semibold text-gray-700">Garantie</span>
-                    <span className="text-gray-900">2 ans</span>
+                    <span className="font-semibold text-gray-700">Marque</span>
+                    <span className="text-gray-900">{product.brand || 'Non spécifiée'}</span>
                   </div>
                 </div>
                 <div className="space-y-3">
                   <div className="flex justify-between py-2 border-b text-sm">
+                    <span className="font-semibold text-gray-700">Stock</span>
+                    <span className="text-gray-900">{product.quantity || 0} unités</span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b text-sm">
                     <span className="font-semibold text-gray-700">Poids</span>
-                    <span className="text-gray-900">2.5 kg</span>
+                    <span className="text-gray-900">{product.weight || 'Non spécifié'}</span>
                   </div>
                   <div className="flex justify-between py-2 border-b text-sm">
                     <span className="font-semibold text-gray-700">Dimensions</span>
-                    <span className="text-gray-900">30 × 20 × 15 cm</span>
+                    <span className="text-gray-900">{product.dimensions || 'Non spécifiées'}</span>
                   </div>
                   <div className="flex justify-between py-2 border-b text-sm">
-                    <span className="font-semibold text-gray-700">Matériau</span>
-                    <span className="text-gray-900">Premium Quality</span>
-                  </div>
-                  <div className="flex justify-between py-2 border-b text-sm">
-                    <span className="font-semibold text-gray-700">Origine</span>
-                    <span className="text-gray-900">Europe</span>
+                    <span className="font-semibold text-gray-700">Vues</span>
+                    <span className="text-gray-900">{product.views || 0}</span>
                   </div>
                 </div>
               </div>
             </TabsContent>
             
             <TabsContent value="reviews" className="p-4 md:p-6">
-              <h3 className="text-lg md:text-xl font-bold mb-4">Avis clients</h3>
-              <div className="space-y-4">
-                {[1, 2, 3].map((review) => (
-                  <Card key={review} className="p-4">
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <div className="flex items-center gap-2 mb-1.5">
-                          <div className="flex">
-                            {[...Array(5)].map((_, i) => (
-                              <Star key={i} className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
-                            ))}
-                          </div>
-                          <span className="font-semibold text-sm">Client {review}</span>
-                        </div>
-                        <p className="text-xs text-gray-500">Acheté le {new Date().toLocaleDateString('fr-FR')}</p>
-                      </div>
-                    </div>
-                    <p className="text-sm text-gray-700">
-                      Excellent produit ! La qualité est au rendez-vous et correspond parfaitement à mes attentes. Je recommande vivement.
-                    </p>
-                  </Card>
-                ))}
-              </div>
             </TabsContent>
             
             <TabsContent value="shipping" className="p-4 md:p-6">
-              <h3 className="text-lg md:text-xl font-bold mb-4">Informations de livraison</h3>
-              <div className="space-y-4">
-                <Card className="p-4 bg-blue-50 border-blue-200">
-                  <div className="flex items-start gap-3">
-                    <Info className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                    <div>
-                      <h4 className="font-semibold text-sm md:text-base mb-1">Livraison standard</h4>
-                      <p className="text-sm text-gray-700 mb-1">Livraison sous 2-5 jours ouvrables</p>
-                      <p className="text-xs text-gray-600">Gratuite pour les commandes de plus de 50€</p>
-                    </div>
-                  </div>
-                </Card>
-                <Card className="p-4">
-                  <h4 className="font-semibold text-sm md:text-base mb-3">Zones de livraison</h4>
-                  <ul className="space-y-2 text-sm text-gray-700">
-                    <li className="flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
-                      <span>Togo - Livraison nationale</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
-                      <span>Afrique de l'Ouest - Délai de 5-10 jours</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
-                      <span>International - Nous consulter</span>
-                    </li>
-                  </ul>
-                  <div className="mt-4 pt-3 border-t">
-                    <Link href="/support" className="text-sm text-blue-600 hover:text-blue-700 underline">
-                      Consultez nos conditions de livraison
-                    </Link>
-                  </div>
-                </Card>
-              </div>
             </TabsContent>
           </Tabs>
         </Card>
@@ -765,18 +645,32 @@ export default function ProductDetailPage() {
             <h2 className="text-[10px] md:text-sm font-bold mb-1.5 md:mb-3 px-1">Produits récemment consultés</h2>
             <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-1 md:gap-2">
               {recentProducts.slice(0, 4).map((recentProduct) => (
-                <div key={recentProduct.id} className="bg-white rounded-md shadow-sm border border-gray-200 overflow-hidden">
-                  <div className="aspect-square relative">
-                    <Image 
-                      src={recentProduct.image || "/placeholder.svg"} 
-                      alt={recentProduct.name}
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
+                <div key={recentProduct.id} className="bg-white rounded-md shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+                  <Link href={`/products/${recentProduct.id}`}>
+                    <div className="aspect-square relative">
+                      <Image 
+                        src={recentProduct.image || "/placeholder.svg"} 
+                        alt={recentProduct.name}
+                        fill
+                        sizes="(max-width: 640px) 33vw, (max-width: 1024px) 16vw, 12vw"
+                        className="object-cover"
+                      />
+                    </div>
+                  </Link>
                   <div className="p-1.5">
-                    <h3 className="text-[9px] font-medium text-gray-900 line-clamp-2 mb-1">{recentProduct.name}</h3>
-                    <p className="text-[8px] font-bold text-primary">€{recentProduct.price.toFixed(2)}</p>
+                    <Link href={`/products/${recentProduct.id}`}>
+                      <h3 className="text-[9px] font-medium text-gray-900 line-clamp-2 mb-1 hover:text-blue-600 transition-colors">{recentProduct.name}</h3>
+                    </Link>
+                    <p className="text-[8px] font-bold text-primary mb-1">€{recentProduct.price.toFixed(2)}</p>
+                    <Button 
+                      onClick={() => addToCart(recentProduct)} 
+                      disabled={!recentProduct.inStock} 
+                      className="w-full h-5 text-[7px] px-1"
+                      size="sm"
+                    >
+                      <ShoppingCart className="h-2.5 w-2.5 mr-0.5" />
+                      Panier
+                    </Button>
                   </div>
                 </div>
               ))}
@@ -797,21 +691,26 @@ export default function ProductDetailPage() {
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-1.5 md:gap-3">
               {similarProducts.map((similarProduct) => (
                 <div key={similarProduct.id} className="bg-white rounded-md shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
-                  <div className="aspect-square relative">
-                    <Image 
-                      src={similarProduct.image || "/placeholder.svg"} 
-                      alt={similarProduct.name}
-                      fill
-                      className="object-cover"
-                    />
-                    {!similarProduct.inStock && (
-                      <Badge variant="destructive" className="absolute top-1 right-1 text-[8px] py-0 px-1">
-                        Rupture
-                      </Badge>
-                    )}
-                  </div>
+                  <Link href={`/products/${similarProduct.id}`}>
+                    <div className="aspect-square relative cursor-pointer">
+                      <Image 
+                        src={similarProduct.image || "/placeholder.svg"} 
+                        alt={similarProduct.name}
+                        fill
+                        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                        className="object-cover hover:scale-105 transition-transform duration-200"
+                      />
+                      {!similarProduct.inStock && (
+                        <Badge variant="destructive" className="absolute top-1 right-1 text-[8px] py-0 px-1">
+                          Rupture
+                        </Badge>
+                      )}
+                    </div>
+                  </Link>
                   <div className="p-2">
-                    <h3 className="text-[10px] font-medium text-gray-900 line-clamp-2 mb-1 leading-tight">{similarProduct.name}</h3>
+                    <Link href={`/products/${similarProduct.id}`}>
+                      <h3 className="text-[10px] font-medium text-gray-900 line-clamp-2 mb-1 leading-tight hover:text-blue-600 transition-colors cursor-pointer">{similarProduct.name}</h3>
+                    </Link>
                     
                     <div className="flex items-center gap-1 mb-1">
                       <div className="flex items-center">
@@ -864,8 +763,8 @@ export default function ProductDetailPage() {
       </div>
 
       <WhatsAppChat
-        defaultMessage={`Bonjour, j'aimerais avoir plus d'informations sur le produit "${product.name}".`}
-        productName={product.name}
+        defaultMessage={`Bonjour, j'aimerais avoir plus d'informations sur le produit "${translatedProductName}".`}
+        productName={translatedProductName}
         productUrl={typeof window !== "undefined" ? window.location.href : ""}
       />
       <Footer />

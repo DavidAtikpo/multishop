@@ -17,6 +17,8 @@ import { useToast } from "@/hooks/use-toast"
 import { ArrowLeft, CreditCard, MapPin, User, LogIn, UserPlus } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
+import { Header } from "@/components/header"
+import { Footer } from "@/components/footer"
 import { useSession } from "next-auth/react"
 
 export default function CheckoutPage() {
@@ -301,6 +303,7 @@ export default function CheckoutPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <Header />
       <div className="mb-4 md:mb-6">
         <Button variant="ghost" asChild className="mb-3 md:mb-4 h-8 md:h-10 text-xs md:text-sm">
           <Link href="/">
