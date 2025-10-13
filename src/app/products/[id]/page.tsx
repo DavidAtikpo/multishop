@@ -40,6 +40,7 @@ interface Product {
   description: string | null
   price: number
   image: string | null
+  images?: string[] // Images multiples optionnelles
   category: string
   inStock: boolean
   rating: number
@@ -190,11 +191,12 @@ export default function ProductDetailPage() {
     )
   }
 
-  const productImages = [
-    product.image || "/placeholder.svg",
-    product.image || "/placeholder.svg",
-    product.image || "/placeholder.svg",
-  ]
+  // Utiliser les images multiples si disponibles, sinon l'image principale
+  const productImages = product.images && product.images.length > 0 
+    ? product.images 
+    : product.image 
+      ? [product.image] 
+      : ["/placeholder.svg"]
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
@@ -243,15 +245,16 @@ export default function ProductDetailPage() {
               )}
             </div>
             
-            <div className="grid grid-cols-3 gap-1 md:gap-2">
+            {/* Afficher les miniatures */}
+            <div className="grid grid-cols-4 gap-0.5 md:gap-1">
               {productImages.map((img, idx) => (
                 <button
                   key={idx}
                   onClick={() => setSelectedImage(idx)}
-                  className={`aspect-square relative overflow-hidden rounded-sm md:rounded-lg transition-all ${
+                  className={`aspect-square relative overflow-hidden rounded-sm transition-all ${
                     selectedImage === idx 
-                      ? 'ring-2 md:ring-4 ring-primary shadow-sm md:shadow-lg scale-105' 
-                      : 'ring-1 md:ring-2 ring-gray-200 hover:ring-gray-300'
+                      ? 'ring-1 md:ring-2 ring-primary shadow-sm scale-105' 
+                      : 'ring-0.5 md:ring-1 ring-gray-200 hover:ring-gray-300'
                   }`}
                 >
                   <Image src={img} alt={`${product.name} ${idx + 1}`} fill className="object-cover" />
