@@ -23,8 +23,19 @@ export function LanguageSelector() {
       const data = await response.json()
       console.log(`🌍 Position actuelle: ${data.country_code} (${data.country_name})`)
       
-      // Recharger la page pour appliquer la nouvelle langue
-      window.location.reload()
+      // Mapper le pays à la langue
+      const countryToLanguage: Record<string, Language> = {
+        'FR': 'fr', 'BE': 'fr', 'CH': 'fr', 'CA': 'fr',
+        'US': 'en', 'GB': 'en', 'AU': 'en', 'NZ': 'en',
+        'DE': 'de', 'AT': 'de', 'LI': 'de',
+        'ES': 'es', 'MX': 'es', 'AR': 'es', 'CO': 'es', 'PE': 'es', 'VE': 'es', 'CL': 'es', 'EC': 'es', 'GT': 'es', 'CU': 'es', 'BO': 'es', 'DO': 'es', 'HN': 'es', 'PY': 'es', 'SV': 'es', 'NI': 'es', 'CR': 'es', 'PA': 'es', 'UY': 'es'
+      }
+      
+      const detectedLanguage = countryToLanguage[data.country_code]
+      if (detectedLanguage) {
+        setLanguage(detectedLanguage)
+        console.log(`🌍 Langue détectée: ${detectedLanguage}`)
+      }
     } catch (error) {
       console.error('Erreur lors de la détection de position:', error)
     }

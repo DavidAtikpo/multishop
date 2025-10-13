@@ -167,7 +167,7 @@ export default function ProductDetailPage() {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent mx-auto"></div>
-          <p className="mt-3 text-sm font-medium text-gray-700">Chargement du produit...</p>
+          <p className="mt-3 text-sm font-medium text-gray-700">{t("loadingProduct")}</p>
         </div>
       </div>
     )
@@ -178,12 +178,12 @@ export default function ProductDetailPage() {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50">
         <Card className="p-6 text-center max-w-md">
           <Package className="h-12 w-12 mx-auto text-gray-400 mb-3" />
-          <h1 className="text-xl font-bold mb-3">Produit introuvable</h1>
-          <p className="text-sm text-gray-600 mb-4">Le produit que vous recherchez n'existe pas ou a été supprimé.</p>
+          <h1 className="text-xl font-bold mb-3">{t("productNotFound")}</h1>
+          <p className="text-sm text-gray-600 mb-4">{t("productNotFoundDesc")}</p>
           <Link href="/">
             <Button size="sm">
               <ArrowLeft className="h-3.5 w-3.5 mr-1.5" />
-              Retour à l'accueil
+{t("backToHome")}
             </Button>
           </Link>
         </Card>
@@ -206,7 +206,7 @@ export default function ProductDetailPage() {
           <div className="flex items-center justify-between">
             <Link href="/" className="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium transition-colors text-[11px] sm:text-sm">
               <ArrowLeft className="h-3.5 w-3.5 mr-1" />
-              Retour aux produits
+{t("backToProducts")}
             </Link>
             <div className="flex items-center gap-1.5">
               <Button
@@ -239,7 +239,7 @@ export default function ProductDetailPage() {
               {!product.inStock && (
                 <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                   <Badge variant="secondary" className="text-[10px] md:text-sm py-0.5 px-2 md:py-1.5 md:px-3">
-                    Rupture de stock
+{t("outOfStock")}
                   </Badge>
                 </div>
               )}
@@ -284,7 +284,7 @@ export default function ProductDetailPage() {
                 </div>
                 <span className="text-[10px] sm:text-xs font-medium text-gray-700">{product.rating}</span>
                 <span className="text-gray-500 text-[10px]">|</span>
-                <span className="text-[10px] sm:text-xs text-gray-600">{product.reviews} avis</span>
+                <span className="text-[10px] sm:text-xs text-gray-600">{product.reviews} {t("reviews")}</span>
               </div>
 
               <div className="flex items-baseline gap-1 md:gap-3 mb-1.5 md:mb-3 flex-wrap">
@@ -298,7 +298,7 @@ export default function ProductDetailPage() {
                 className="text-[10px] sm:text-xs py-1 px-2"
               >
                 <CheckCircle2 className="h-3 w-3 mr-0.5" />
-                {product.inStock ? "En stock - Expédition rapide" : "Rupture de stock"}
+{product.inStock ? t("inStock") : t("outOfStock")}
               </Badge>
             </div>
 
@@ -307,7 +307,7 @@ export default function ProductDetailPage() {
                 {/* Sélecteur de pays */}
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <label className="block text-[10px] sm:text-xs font-semibold">Pays</label>
+                    <label className="block text-[10px] sm:text-xs font-semibold">{t("countryLabel")}</label>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -331,7 +331,7 @@ export default function ProductDetailPage() {
 
                 {/* Sélecteur de provenance */}
                 <div>
-                  <label className="block text-[10px] sm:text-xs font-semibold mb-1">Provenance</label>
+                  <label className="block text-[10px] sm:text-xs font-semibold mb-1">{t("originLabel")}</label>
                   <select
                     value={selectedOrigin}
                     onChange={(e) => setSelectedOrigin(e.target.value)}
@@ -352,7 +352,7 @@ export default function ProductDetailPage() {
                 </div>
 
                 <div>
-                  <label className="block text-[10px] sm:text-xs font-semibold mb-1">Quantité</label>
+                  <label className="block text-[10px] sm:text-xs font-semibold mb-1">{t("quantityLabel")}</label>
                   <div className="flex items-center gap-1">
                     <Button 
                       variant="outline" 
@@ -381,7 +381,7 @@ export default function ProductDetailPage() {
                     className="flex-1 gap-1 h-7 sm:h-9 text-[10px] sm:text-xs font-semibold shadow-md hover:shadow-lg transition-all" 
                   >
                     <ShoppingCart className="h-3 w-3" />
-                    Ajouter au panier
+{t("addToCartBtn")}
                   </Button>
                   <Button 
                     onClick={handleBuyNow}
@@ -389,7 +389,7 @@ export default function ProductDetailPage() {
                     disabled={!product.inStock}
                     className="h-7 sm:h-9 px-2 sm:px-4 bg-green-600 hover:bg-green-700 shadow-md text-[10px] sm:text-xs"
                   >
-                    Acheter
+{t("buyBtn")}
                   </Button>
                 </div>
               </div>
@@ -398,7 +398,7 @@ export default function ProductDetailPage() {
             {/* Ligne d'expédition avec point vert */}
             <div className="flex items-center gap-1.5 p-1.5 bg-green-50 border border-green-200 rounded-md">
               <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
-              <span className="text-[10px] sm:text-xs font-medium text-green-800">Expédition en 48h/72h</span>
+              <span className="text-[10px] sm:text-xs font-medium text-green-800">{t("shippingInfo")}</span>
             </div>
           </div>
         </div>

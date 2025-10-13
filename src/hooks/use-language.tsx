@@ -49,121 +49,66 @@ const countryToLanguage: Record<string, Language> = {
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguage] = useState<Language>("en")
-  const [isDetecting, setIsDetecting] = useState(true)
   const [isClient, setIsClient] = useState(false)
-  const [lastDetectedCountry, setLastDetectedCountry] = useState<string | null>(null)
+  const [isInitialized, setIsInitialized] = useState(false)
 
   // S'assurer que nous sommes côté client
   useEffect(() => {
     setIsClient(true)
   }, [])
 
-  // Fonction de détection de langue
-  const detectLanguage = async (forceUpdate = false) => {
-    try {
-      // 1. Vérifier d'abord le localStorage (sauf si forceUpdate)
-      if (!forceUpdate) {
-        const savedLanguage = localStorage.getItem("language") as Language
-        if (savedLanguage && savedLanguage in translations) {
-          setLanguage(savedLanguage)
-          setIsDetecting(false)
-          return
-        }
-      }
-
-      // 2. Détecter par géolocalisation (priorité pour VPN)
-      try {
-        const response = await fetch('https://ipapi.co/json/')
-        const data = await response.json()
-        const currentCountry = data.country_code
-        
-        // Vérifier si le pays a changé (détection VPN)
-        if (currentCountry !== lastDetectedCountry) {
-          setLastDetectedCountry(currentCountry)
-          const detectedLanguage = countryToLanguage[currentCountry]
-          
-          if (detectedLanguage) {
-            setLanguage(detectedLanguage)
-            setIsDetecting(false)
-            // Sauvegarder la nouvelle langue détectée
-            localStorage.setItem("language", detectedLanguage)
-            console.log(`🌍 Position détectée: ${currentCountry} → Langue: ${detectedLanguage}`)
-            return
-          }
-        }
-      } catch (geoError) {
-        console.log('Géolocalisation non disponible')
-      }
-
-      // 3. Détecter la langue du navigateur
-      const browserLanguage = navigator.language.split('-')[0]
-      const supportedLanguages: Language[] = ['fr', 'en', 'de', 'es']
-      
-      if (supportedLanguages.includes(browserLanguage as Language)) {
-        setLanguage(browserLanguage as Language)
-        setIsDetecting(false)
-        return
-      }
-
-      // 4. Fallback sur l'anglais
-      setLanguage("en")
-      setIsDetecting(false)
-    } catch (error) {
-      console.log('Erreur lors de la détection de langue:', error)
-      setLanguage("en")
-      setIsDetecting(false)
-    }
-  }
-
-  // Détection automatique de la langue
+  // Initialisation de la langue au chargement
   useEffect(() => {
     if (!isClient) return
-    detectLanguage()
+
+    // 1. Vérifier d'abord le localStorage
+    const savedLanguage = localStorage.getItem("language") as Language
+    if (savedLanguage && savedLanguage in translations) {
+      setLanguage(savedLanguage)
+      setIsInitialized(true)
+      return
+    }
+
+    // 2. Détecter la langue du navigateur
+    const browserLanguage = navigator.language.split('-')[0]
+    const supportedLanguages: Language[] = ['fr', 'en', 'de', 'es']
+    
+    if (supportedLanguages.includes(browserLanguage as Language)) {
+      setLanguage(browserLanguage as Language)
+      localStorage.setItem("language", browserLanguage)
+    } else {
+      // 3. Fallback sur le français par défaut
+      setLanguage("fr")
+      localStorage.setItem("language", "fr")
+    }
+    
+    setIsInitialized(true)
   }, [isClient])
 
-  // Surveillance des changements de position (VPN, etc.)
-  useEffect(() => {
-    if (!isClient) return
-
-    // Vérifier la position toutes les 30 secondes
-    const interval = setInterval(() => {
-      detectLanguage(true) // Force la détection
-    }, 30000)
-
-    // Écouter les événements de changement de réseau
-    const handleOnline = () => {
-      console.log('🔄 Connexion détectée, vérification de la position...')
-      setTimeout(() => detectLanguage(true), 1000)
-    }
-
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        console.log('👁️ Page visible, vérification de la position...')
-        detectLanguage(true)
-      }
-    }
-
-    window.addEventListener('online', handleOnline)
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-
-    return () => {
-      clearInterval(interval)
-      window.removeEventListener('online', handleOnline)
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
-    }
-  }, [isClient, lastDetectedCountry])
-
-  useEffect(() => {
-    if (!isDetecting) {
-      localStorage.setItem("language", language)
-    }
-  }, [language, isDetecting])
-
-  const t = (key: TranslationKey): string => {
-    return translations[language][key] || translations.fr[key]
+  // Fonction pour changer la langue manuellement
+  const handleSetLanguage = (newLanguage: Language) => {
+    setLanguage(newLanguage)
+    localStorage.setItem("language", newLanguage)
+    console.log(`🌍 Langue changée manuellement: ${newLanguage}`)
   }
 
-  return <LanguageContext.Provider value={{ language, setLanguage, t }}>{children}</LanguageContext.Provider>
+  const t = (key: TranslationKey): string => {
+    if (!isInitialized) {
+      // Retourner la traduction française par défaut pendant le chargement
+      return translations.fr[key] || key
+    }
+    return translations[language][key] || translations.fr[key] || key
+  }
+
+  return (
+    <LanguageContext.Provider value={{ 
+      language, 
+      setLanguage: handleSetLanguage, 
+      t 
+    }}>
+      {children}
+    </LanguageContext.Provider>
+  )
 }
 
 export function useLanguage() {
