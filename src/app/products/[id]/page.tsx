@@ -136,6 +136,17 @@ export default function ProductDetailPage() {
     }
   }
 
+  const handleBuyNow = () => {
+    if (product) {
+      // Ajouter le produit au panier avec la quantité sélectionnée
+      for (let i = 0; i < quantity; i++) {
+        addToCart(product)
+      }
+      // Rediriger vers le checkout
+      window.location.href = "/checkout"
+    }
+  }
+
   const handleShare = async () => {
     if (navigator.share) {
       try {
@@ -370,6 +381,7 @@ export default function ProductDetailPage() {
                     Ajouter au panier
                   </Button>
                   <Button 
+                    onClick={handleBuyNow}
                     variant="default" 
                     disabled={!product.inStock}
                     className="h-7 sm:h-9 px-2 sm:px-4 bg-green-600 hover:bg-green-700 shadow-md text-[10px] sm:text-xs"

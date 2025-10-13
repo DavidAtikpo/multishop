@@ -8,15 +8,27 @@ const prisma = new PrismaClient()
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { items, customerInfo, totalAmount, status = "pending" } = body
+    const { 
+      items, 
+      customerInfo, 
+      totalAmount, 
+      originalAmount,
+      discount,
+      discountType,
+      promoCode,
+      status = "pending",
+      isGuest = false
+    } = body
 
     // Resolve user to attach to order (required by schema)
     const session = await getServerSession(authOptions)
     let userId: string | null = null
-    if (session?.user?.id) {
+    
+    if (session?.user?.id && !isGuest) {
+      // Utilisateur connecté
       userId = session.user.id
     } else if (customerInfo?.email) {
-      // Upsert a user by email for guest checkout
+      // Créer ou trouver un utilisateur pour les invités
       const user = await prisma.user.upsert({
         where: { email: customerInfo.email },
         update: {
@@ -43,10 +55,22 @@ export async function POST(request: NextRequest) {
     }
 
     const orderData: any = {
-      shippingAddress: `${customerInfo.address}, ${customerInfo.city}, ${customerInfo.postalCode}, ${customerInfo.country}`,
+      shippingAddress: `${customerInfo.address}, ${customerInfo.city}, ${customerInfo.postalCode}`,
       total: totalAmount,
+      originalAmount: originalAmount || totalAmount,
+      discount: discount || 0,
+      discountType: discountType || null,
+      promoCode: promoCode || null,
       status: (typeof status === 'string' ? status.toUpperCase() : 'PENDING') as any,
       paymentMethod: customerInfo.paymentMethod || null,
+      isGuest: isGuest,
+      // Informations de provenance
+      originCountry: customerInfo.selectedCountry || null,
+      originCity: customerInfo.selectedOrigin || null,
+      // Informations client
+      customerName: `${customerInfo.firstName || ""} ${customerInfo.lastName || ""}`.trim(),
+      customerEmail: customerInfo.email,
+      customerPhone: customerInfo.phone,
       items: {
         create: items.map((item: any) => ({
           productId: item.productId,
