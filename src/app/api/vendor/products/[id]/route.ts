@@ -48,7 +48,14 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: "Product not found" }, { status: 404 })
     }
 
-    return NextResponse.json(product)
+    // Parse JSON strings back to arrays for frontend compatibility
+    const productWithArrays = {
+      ...product,
+      images: product.images ? JSON.parse(product.images) : [],
+      tags: product.tags ? JSON.parse(product.tags) : [],
+    }
+
+    return NextResponse.json(productWithArrays)
   } catch (error) {
     console.error("Error fetching vendor product:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
@@ -74,7 +81,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     const body = await request.json()
-    const { name, description, price, image, category, inStock } = body
+    const { name, description, price, image, images, category, inStock, brand, sku, weight, dimensions, tags, quantity } = body
 
     // Update product (only if it belongs to this vendor)
     const product = await prisma.product.updateMany({
@@ -87,8 +94,15 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         description,
         price: Number.parseFloat(price),
         image,
+        images: images ? JSON.stringify(images) : null,
         category,
         inStock: inStock ?? true,
+        brand: brand || null,
+        sku: sku || null,
+        weight: weight ? Number.parseFloat(weight.toString()) : null,
+        dimensions: dimensions || null,
+        tags: tags ? JSON.stringify(tags) : null,
+        quantity: quantity ? Number.parseInt(quantity.toString()) : 0,
       },
     })
 

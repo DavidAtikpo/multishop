@@ -73,7 +73,7 @@ export default function CheckoutPage() {
           address: u.address || prev.address,
           city: u.city || prev.city,
           postalCode: u.postalCode || prev.postalCode,
-          country: u.country || prev.country,
+          selectedCountry: u.selectedCountry || prev.selectedCountry,
         }))
         setHasPrefill(!!(u.address || u.city || u.postalCode))
       } catch {}

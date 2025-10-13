@@ -14,8 +14,11 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product }: ProductCardProps) {
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   const { addToCart } = useCart()
+  
+  // Utiliser le nom original (pas de traductions dans la base de données)
+  const translatedProductName = product.name
 
   const handleAddToCart = () => {
     if (product.inStock) {
@@ -28,7 +31,7 @@ export function ProductCard({ product }: ProductCardProps) {
       <div className="aspect-square relative">
         <Image
           src={product.image || "/placeholder.svg"}
-          alt={product.name}
+          alt={translatedProductName}
           fill
           className="object-cover group-hover:scale-105 transition-transform duration-300"
           onError={(e) => {
@@ -37,14 +40,14 @@ export function ProductCard({ product }: ProductCardProps) {
         />
         {!product.inStock && (
           <Badge variant="destructive" className="absolute top-1 right-1 text-[8px] py-0 px-1">
-            Rupture
+            {t("outOfStockShort")}
           </Badge>
         )}
         <Link href={`/products/${product.id}`} className="absolute inset-0 z-10" />
       </div>
       
       <div className="p-2">
-        <h3 className="text-[10px] md:text-sm font-medium text-gray-900 line-clamp-2 mb-1 leading-tight">{product.name}</h3>
+        <h3 className="text-[10px] md:text-sm font-medium text-gray-900 line-clamp-2 mb-1 leading-tight">{translatedProductName}</h3>
         
         <div className="flex items-center gap-1 mb-1">
           <div className="flex items-center">
@@ -63,7 +66,7 @@ export function ProductCard({ product }: ProductCardProps) {
         <div className="flex items-center justify-between mb-2">
           <span className="text-[11px] md:text-base font-bold text-primary">€{product.price.toFixed(2)}</span>
           <Badge variant={product.inStock ? "default" : "secondary"} className="text-[8px] md:text-xs py-0 px-1 md:py-1 md:px-2">
-            {product.inStock ? "Stock" : "Rupture"}
+            {product.inStock ? t("inStockShort") : t("outOfStockShort")}
           </Badge>
         </div>
 
@@ -75,7 +78,7 @@ export function ProductCard({ product }: ProductCardProps) {
             size="sm"
           >
             <ShoppingCart className="h-2.5 w-2.5 md:h-3 md:w-3 mr-0.5" />
-            Panier
+{t("cartShort")}
           </Button>
           <Link href={`/products/${product.id}`}>
             <Button variant="outline" size="sm" className="h-6 w-6 md:h-8 md:w-8 p-0">

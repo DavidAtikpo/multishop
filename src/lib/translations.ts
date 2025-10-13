@@ -242,6 +242,13 @@ export const translations = {
       defaultAddressLoaded: "Adresse par défaut chargée depuis votre compte. Modifiez-la pour cette commande si besoin.",
       noDefaultAddress: "Aucune adresse par défaut trouvée. Renseignez une adresse de livraison.",
       selectOrigin: "Sélectionnez une provenance",
+      allProducts: "Tous les produits",
+      loadingProducts: "Chargement des produits...",
+      noProductsFound: "Aucun produit trouvé",
+      retry: "Réessayer",
+      outOfStockShort: "Rupture",
+      inStockShort: "Stock",
+      cartShort: "Panier",
     },
     en: {
       // Navigation
@@ -486,6 +493,13 @@ export const translations = {
       defaultAddressLoaded: "Default address loaded from your account. Modify it for this order if needed.",
       noDefaultAddress: "No default address found. Please provide a delivery address.",
       selectOrigin: "Select an origin",
+      allProducts: "All products",
+      loadingProducts: "Loading products...",
+      noProductsFound: "No products found",
+      retry: "Retry",
+      outOfStockShort: "Out",
+      inStockShort: "Stock",
+      cartShort: "Cart",
     },
     de: {
       // Navigation
@@ -730,6 +744,13 @@ export const translations = {
       defaultAddressLoaded: "Standardadresse aus Ihrem Konto geladen. Ändern Sie sie für diese Bestellung bei Bedarf.",
       noDefaultAddress: "Keine Standardadresse gefunden. Bitte geben Sie eine Lieferadresse an.",
       selectOrigin: "Wählen Sie einen Ursprung",
+      allProducts: "Alle Produkte",
+      loadingProducts: "Produkte werden geladen...",
+      noProductsFound: "Keine Produkte gefunden",
+      retry: "Wiederholen",
+      outOfStockShort: "Aus",
+      inStockShort: "Lager",
+      cartShort: "Warenkorb",
     },
     es: {
       // Navigation
@@ -974,6 +995,13 @@ export const translations = {
       defaultAddressLoaded: "Dirección por defecto cargada desde tu cuenta. Modifícala para este pedido si es necesario.",
       noDefaultAddress: "No se encontró dirección por defecto. Por favor proporciona una dirección de entrega.",
       selectOrigin: "Selecciona un origen",
+      allProducts: "Todos los productos",
+      loadingProducts: "Cargando productos...",
+      noProductsFound: "No se encontraron productos",
+      retry: "Reintentar",
+      outOfStockShort: "Agotado",
+      inStockShort: "Stock",
+      cartShort: "Carrito",
     },
   } as const
   

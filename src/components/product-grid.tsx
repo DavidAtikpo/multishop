@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useLanguage } from "@/hooks/use-language"
 import { ProductCard } from "./product-card"
 import { Button } from "../components/ui/button"
+import { translateCategoryObject } from "@/lib/client-translations"
 
 interface Product {
   id: string
@@ -11,16 +12,25 @@ interface Product {
   description: string
   price: number
   image: string
-  images: string[]
+  images?: string[]
   category: string
   inStock: boolean
   rating: number
   reviews: number
   brand?: string
-  views: number
+  views?: number
   vendor?: {
     storeName: string
   }
+  // Champs de traduction (optionnels pour compatibilité)
+  name_fr?: string
+  name_en?: string
+  name_de?: string
+  name_es?: string
+  description_fr?: string
+  description_en?: string
+  description_de?: string
+  description_es?: string
 }
 
 interface Category {
@@ -30,7 +40,7 @@ interface Category {
 }
 
 export function ProductGrid() {
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
@@ -39,7 +49,7 @@ export function ProductGrid() {
 
   useEffect(() => {
     fetchProducts()
-  }, [selectedCategory])
+  }, [selectedCategory, language])
 
   const fetchProducts = async () => {
     try {
@@ -53,9 +63,16 @@ export function ProductGrid() {
       const response = await fetch(`/api/products?${params.toString()}`)
       if (response.ok) {
         const data = await response.json()
-        setProducts(data.products || [])
+        // Utiliser les produits directement (la traduction se fera dans ProductCard)
+        const products = data.products || []
+        setProducts(products)
+        
+        // Traduire les catégories
         if (data.categories) {
-          setCategories(data.categories)
+          const translatedCategories = data.categories.map((category: Category) => 
+            translateCategoryObject(category, language)
+          )
+          setCategories(translatedCategories)
         }
       } else {
         throw new Error('Erreur lors du chargement des produits')
@@ -74,7 +91,7 @@ export function ProductGrid() {
         <div className="container mx-auto text-center">
           <h2 className="text-3xl font-bold mb-4">{t("products")}</h2>
           <div className="text-red-500 mb-4">{error}</div>
-          <Button onClick={fetchProducts}>Réessayer</Button>
+          <Button onClick={fetchProducts}>{t("retry")}</Button>
         </div>
       </section>
     )
@@ -93,7 +110,7 @@ export function ProductGrid() {
             size="sm"
             className="text-xs md:text-sm h-6 md:h-9 px-2 md:px-4"
           >
-            Tous les produits
+{t("allProducts")}
           </Button>
           {categories.map((category) => (
             <Button
@@ -112,7 +129,7 @@ export function ProductGrid() {
         {loading && (
           <div className="flex justify-center items-center py-6 md:py-12">
             <div className="animate-spin rounded-full h-6 w-6 md:h-8 md:w-8 border-b-2 border-primary"></div>
-            <span className="ml-2 text-sm md:text-base">Chargement des produits...</span>
+            <span className="ml-2 text-sm md:text-base">{t("loadingProducts")}</span>
           </div>
         )}
 
@@ -125,7 +142,7 @@ export function ProductGrid() {
               ))
             ) : (
               <div className="col-span-full text-center py-6 md:py-12 text-muted-foreground text-sm md:text-base">
-                Aucun produit trouvé
+{t("noProductsFound")}
               </div>
             )}
           </div>
