@@ -32,7 +32,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { WhatsAppChat } from "@/components/whatsapp-chat"
 import { ProductCard } from "@/components/product-card"
-import { products } from "@/lib/products"
+// import { products } from "@/lib/products" // Supprimé - on utilise l'API maintenant
 
 interface Product {
   id: string
@@ -84,21 +84,34 @@ export default function ProductDetailPage() {
           localStorage.setItem('recentProducts', JSON.stringify(updatedRecent))
           setRecentProducts(updatedRecent.slice(1))
           
-          // Charger les produits similaires depuis les données locales
-          let similarProducts = products
-            .filter(p => p.category === data.category && p.id !== data.id)
-            .slice(0, 6)
-          
-          // Si aucun produit similaire trouvé, prendre des produits aléatoires
-          if (similarProducts.length === 0) {
-            similarProducts = products
-              .filter(p => p.id !== data.id)
-              .sort(() => 0.5 - Math.random())
-              .slice(0, 6)
+          // Charger les produits similaires depuis l'API
+          try {
+            const similarResponse = await fetch(`/api/products?category=${data.category}&limit=10`)
+            if (similarResponse.ok) {
+              const similarData = await similarResponse.json()
+              let similarProducts = similarData.products
+                .filter((p: any) => p.id !== data.id)
+                .slice(0, 6)
+              
+              // Si aucun produit similaire trouvé, prendre des produits aléatoires
+              if (similarProducts.length === 0) {
+                const allResponse = await fetch(`/api/products?limit=20`)
+                if (allResponse.ok) {
+                  const allData = await allResponse.json()
+                  similarProducts = allData.products
+                    .filter((p: any) => p.id !== data.id)
+                    .sort(() => 0.5 - Math.random())
+                    .slice(0, 6)
+                }
+              }
+              
+              setSimilarProducts(similarProducts)
+              console.log('Similar products loaded:', similarProducts.length, 'for category:', data.category)
+            }
+          } catch (error) {
+            console.error('Error loading similar products:', error)
+            setSimilarProducts([])
           }
-          
-          setSimilarProducts(similarProducts)
-          console.log('Similar products loaded:', similarProducts.length, 'for category:', data.category)
         }
       } catch (error) {
         console.error("Error fetching product:", error)
@@ -114,12 +127,7 @@ export default function ProductDetailPage() {
 
   useEffect(() => {
     const recent = JSON.parse(localStorage.getItem('recentProducts') || '[]')
-    if (recent.length === 0) {
-      const randomProducts = products.slice(0, 6)
-      setRecentProducts(randomProducts)
-    } else {
-      setRecentProducts(recent.slice(0, 6))
-    }
+    setRecentProducts(recent.slice(0, 6))
   }, [])
 
   // Initialiser la provenance quand le pays change
