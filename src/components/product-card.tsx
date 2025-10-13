@@ -24,63 +24,66 @@ export function ProductCard({ product }: ProductCardProps) {
   }
 
   return (
-    <Card className="group hover:shadow-lg transition-shadow duration-300">
-      <CardContent className="p-4">
-        <div className="relative aspect-square mb-4 overflow-hidden rounded-md">
-          <Image
-            src={product.image || "/placeholder.svg"}
-            alt={product.name}
-            fill
-            className="object-cover group-hover:scale-105 transition-transform duration-300"
-            onError={(e) => {
-              e.currentTarget.src = "/placeholder.svg"
-            }}
-          />
-          {!product.inStock && (
-            <Badge variant="destructive" className="absolute top-2 right-2">
-              {t("outOfStock")}
-            </Badge>
-          )}
-          <Link href={`/products/${product.id}`} className="absolute inset-0 z-10" />
-        </div>
-
-        <h3 className="font-semibold text-lg mb-2 line-clamp-2">{product.name}</h3>
-
-        <div className="flex items-center gap-2 mb-2">
+    <div className="bg-white rounded-md shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow group">
+      <div className="aspect-square relative">
+        <Image
+          src={product.image || "/placeholder.svg"}
+          alt={product.name}
+          fill
+          className="object-cover group-hover:scale-105 transition-transform duration-300"
+          onError={(e) => {
+            e.currentTarget.src = "/placeholder.svg"
+          }}
+        />
+        {!product.inStock && (
+          <Badge variant="destructive" className="absolute top-1 right-1 text-[8px] py-0 px-1">
+            Rupture
+          </Badge>
+        )}
+        <Link href={`/products/${product.id}`} className="absolute inset-0 z-10" />
+      </div>
+      
+      <div className="p-2">
+        <h3 className="text-[10px] md:text-sm font-medium text-gray-900 line-clamp-2 mb-1 leading-tight">{product.name}</h3>
+        
+        <div className="flex items-center gap-1 mb-1">
           <div className="flex items-center">
             {[...Array(5)].map((_, i) => (
               <Star
                 key={i}
-                className={`h-4 w-4 ${
+                className={`h-2 w-2 md:h-3 md:w-3 ${
                   i < Math.floor(product.rating) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
                 }`}
               />
             ))}
           </div>
-          <span className="text-sm text-muted-foreground">
-            ({product.reviews} {t("reviews")})
-          </span>
+          <span className="text-[8px] md:text-xs text-gray-500">({product.reviews})</span>
         </div>
 
-        <div className="flex items-center justify-between mb-4">
-          <span className="text-2xl font-bold text-primary">€{product.price.toFixed(2)}</span>
-          <Badge variant={product.inStock ? "default" : "secondary"}>
-            {product.inStock ? t("inStock") : t("outOfStock")}
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-[11px] md:text-base font-bold text-primary">€{product.price.toFixed(2)}</span>
+          <Badge variant={product.inStock ? "default" : "secondary"} className="text-[8px] md:text-xs py-0 px-1 md:py-1 md:px-2">
+            {product.inStock ? "Stock" : "Rupture"}
           </Badge>
         </div>
-      </CardContent>
 
-      <CardFooter className="p-4 pt-0 space-x-2">
-        <Button onClick={handleAddToCart} disabled={!product.inStock} className="flex-1 gap-2">
-          <ShoppingCart className="h-4 w-4" />
-          {t("addToCart")}
-        </Button>
-        <Link href={`/products/${product.id}`}>
-          <Button variant="outline" size="sm">
-            <Eye className="h-4 w-4" />
+        <div className="flex gap-1">
+          <Button 
+            onClick={handleAddToCart} 
+            disabled={!product.inStock} 
+            className="flex-1 h-6 md:h-8 text-[8px] md:text-xs px-1 md:px-2"
+            size="sm"
+          >
+            <ShoppingCart className="h-2.5 w-2.5 md:h-3 md:w-3 mr-0.5" />
+            Panier
           </Button>
-        </Link>
-      </CardFooter>
-    </Card>
+          <Link href={`/products/${product.id}`}>
+            <Button variant="outline" size="sm" className="h-6 w-6 md:h-8 md:w-8 p-0">
+              <Eye className="h-2.5 w-2.5 md:h-3 md:w-3" />
+            </Button>
+          </Link>
+        </div>
+      </div>
+    </div>
   )
 }
