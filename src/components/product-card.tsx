@@ -9,6 +9,7 @@ import { Star, ShoppingCart, Eye } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { translateProductName } from "@/lib/product-translations"
+import { getValidImageUrl } from "@/lib/image-validation"
 
 interface ProductCardProps {
   product: Product
@@ -31,7 +32,7 @@ export function ProductCard({ product }: ProductCardProps) {
     <div className="bg-white rounded-md shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow group">
       <div className="aspect-square relative">
         <Image
-          src={product.image || "/placeholder.svg"}
+          src={getValidImageUrl(product.image)}
           alt={translatedProductName}
           fill
           className="object-cover group-hover:scale-105 transition-transform duration-300"

@@ -40,6 +40,8 @@ import {
 } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 import Link from "next/link"
+import Image from "next/image"
+import { getValidImageUrl } from "@/lib/image-validation"
 
 interface Product {
   id: string
@@ -61,6 +63,13 @@ interface Product {
   views: number
   createdAt: string
   updatedAt: string
+}
+
+interface Category {
+  id: string
+  name: string
+  description?: string
+  image?: string
 }
 
 interface Order {
@@ -114,6 +123,7 @@ export default function VendorDashboard() {
   const { data: session, status } = useSession()
   const [products, setProducts] = useState<Product[]>([])
   const [orders, setOrders] = useState<Order[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
   const [stats, setStats] = useState<ExtendedVendorStats>({
     totalProducts: 0,
     totalOrders: 0,
@@ -154,13 +164,19 @@ export default function VendorDashboard() {
     fetchVendorData()
   }, [session, status])
 
+  const getCategoryName = (categoryId: string) => {
+    const category = categories.find(c => c.id === categoryId)
+    return category ? category.name : categoryId
+  }
+
   const fetchVendorData = async () => {
     try {
       setLoading(true)
-      const [productsRes, ordersRes, statsRes] = await Promise.all([
-        fetch("/api/vendor/products"),
+      const [productsRes, ordersRes, statsRes, categoriesRes] = await Promise.all([
+        fetch("/api/vendor/products/all"),
         fetch("/api/vendor/orders"),
         fetch("/api/vendor/stats"),
+        fetch("/api/categories"),
       ])
 
       if (productsRes.ok) {
@@ -176,6 +192,11 @@ export default function VendorDashboard() {
       if (statsRes.ok) {
         const statsData = await statsRes.json()
         setStats(statsData)
+      }
+
+      if (categoriesRes.ok) {
+        const categoriesData = await categoriesRes.json()
+        setCategories(categoriesData)
       }
     } catch (error) {
       console.error("Error fetching vendor data:", error)
@@ -301,12 +322,20 @@ export default function VendorDashboard() {
           <h1 className="text-3xl font-bold">Tableau de bord vendeur</h1>
           <p className="text-muted-foreground">Vue d'ensemble complète de votre activité</p>
         </div>
-        <Link href="/vendor/products/add">
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Ajouter un produit
-          </Button>
-        </Link>
+        <div className="flex gap-2">
+          <Link href="/vendor/products/add">
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              Ajouter un produit
+            </Button>
+          </Link>
+          <Link href="/vendor/products/bulk-edit">
+            <Button variant="outline">
+              <Edit className="mr-2 h-4 w-4" />
+              Modification en lot
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
@@ -517,6 +546,12 @@ export default function VendorDashboard() {
                     Ajouter un produit
                   </Button>
                 </Link>
+                <Link href="/vendor/products/bulk-edit">
+                  <Button variant="outline" className="w-full justify-start bg-transparent">
+                    <Edit className="mr-2 h-4 w-4" />
+                    Modification en lot
+                  </Button>
+                </Link>
                 <Link href="/vendor/promotions">
                   <Button variant="outline" className="w-full justify-start bg-transparent">
                     <Percent className="mr-2 h-4 w-4" />
@@ -592,6 +627,12 @@ export default function VendorDashboard() {
                   Ajouter un produit
                 </Button>
               </Link>
+              <Link href="/vendor/products/bulk-edit">
+                <Button variant="outline">
+                  <Edit className="mr-2 h-4 w-4" />
+                  Modification en lot
+                </Button>
+              </Link>
             </div>
           </div>
 
@@ -613,22 +654,23 @@ export default function VendorDashboard() {
                   {products.map((product) => (
                     <TableRow key={product.id}>
                       <TableCell>
-                        <img
-                          src={
-                            (product.images && product.images.length > 0) 
-                              ? product.images[0] 
-                              : product.image || "/placeholder.svg"
-                          }
-                          alt={product.name}
-                          className="w-12 h-12 object-cover rounded"
-                          onError={(e) => {
-                            e.currentTarget.src = "/placeholder.svg"
-                          }}
-                        />
+                        <div className="relative w-12 h-12">
+                          <Image
+                            src={getValidImageUrl(
+                              (product.images && product.images.length > 0) 
+                                ? product.images[0] 
+                                : product.image
+                            )}
+                            alt={product.name}
+                            fill
+                            className="object-cover rounded"
+                            sizes="48px"
+                          />
+                        </div>
                       </TableCell>
                       <TableCell className="font-medium">{product.name}</TableCell>
                       <TableCell>{product.price.toFixed(2)} €</TableCell>
-                      <TableCell>{product.category}</TableCell>
+                      <TableCell>{getCategoryName(product.category)}</TableCell>
                       <TableCell>
                         <Badge variant={product.inStock ? "default" : "destructive"}>
                           {product.inStock ? "En stock" : "Rupture"}

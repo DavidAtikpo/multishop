@@ -83,27 +83,30 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const body = await request.json()
     const { name, description, price, image, images, category, inStock, brand, sku, weight, dimensions, tags, quantity } = body
 
+    // Construire l'objet de mise à jour avec seulement les champs définis
+    const updateData: any = {}
+    
+    if (name !== undefined) updateData.name = name
+    if (description !== undefined) updateData.description = description
+    if (price !== undefined) updateData.price = Number.parseFloat(price)
+    if (image !== undefined) updateData.image = image
+    if (images !== undefined) updateData.images = images || []
+    if (category !== undefined) updateData.category = category
+    if (inStock !== undefined) updateData.inStock = inStock
+    if (brand !== undefined) updateData.brand = brand || null
+    if (sku !== undefined) updateData.sku = sku || null
+    if (weight !== undefined) updateData.weight = weight ? Number.parseFloat(weight.toString()) : null
+    if (dimensions !== undefined) updateData.dimensions = dimensions || null
+    if (tags !== undefined) updateData.tags = tags || []
+    if (quantity !== undefined) updateData.quantity = quantity ? Number.parseInt(quantity.toString()) : 0
+
     // Update product (only if it belongs to this vendor)
     const product = await prisma.product.updateMany({
       where: {
         id,
         vendorId: vendor.id,
       },
-      data: {
-        name,
-        description,
-        price: Number.parseFloat(price),
-        image,
-        images: images || [],
-        category,
-        inStock: inStock ?? true,
-        brand: brand || null,
-        sku: sku || null,
-        weight: weight ? Number.parseFloat(weight.toString()) : null,
-        dimensions: dimensions || null,
-        tags: tags || [],
-        quantity: quantity ? Number.parseInt(quantity.toString()) : 0,
-      },
+      data: updateData,
     })
 
     if (product.count === 0) {

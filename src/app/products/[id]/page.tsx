@@ -33,6 +33,7 @@ import Link from "next/link"
 import { WhatsAppChat } from "@/components/whatsapp-chat"
 import { ProductCard } from "@/components/product-card"
 import { translateProductName } from "@/lib/product-translations"
+import { translateCategoryObject } from "@/lib/client-translations"
 // import { products } from "@/lib/products" // Supprimé - on utilise l'API maintenant
 
 interface Product {
@@ -70,6 +71,7 @@ export default function ProductDetailPage() {
   const [selectedOrigin, setSelectedOrigin] = useState("")
   const [showOriginInfo, setShowOriginInfo] = useState(false)
   const [expandedDetails, setExpandedDetails] = useState<string | null>(null)
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>([])
 
   // Définir les provenances par pays
   const provenanceOptions = {
@@ -149,7 +151,28 @@ export default function ProductDetailPage() {
   useEffect(() => {
     const recent = JSON.parse(localStorage.getItem('recentProducts') || '[]')
     setRecentProducts(recent.slice(0, 6))
+    fetchCategories()
   }, [])
+
+  const fetchCategories = async () => {
+    try {
+      const response = await fetch('/api/categories')
+      if (response.ok) {
+        const categoriesData = await response.json()
+        const translatedCategories = categoriesData.map((category: any) => 
+          translateCategoryObject(category, language)
+        )
+        setCategories(translatedCategories)
+      }
+    } catch (error) {
+      console.error("Erreur lors du chargement des catégories:", error)
+    }
+  }
+
+  const getCategoryName = (categoryId: string) => {
+    const category = categories.find(c => c.id === categoryId)
+    return category ? category.name : categoryId
+  }
 
   // Initialiser la provenance quand le pays change
   useEffect(() => {
@@ -306,7 +329,7 @@ export default function ProductDetailPage() {
           {/* Informations produit */}
           <div className="space-y-2.5 md:space-y-4">
             <div>
-              <Badge className="mb-1 text-[10px] sm:text-xs">{product.category}</Badge>
+              <Badge className="mb-1 text-[10px] sm:text-xs">{getCategoryName(product.category)}</Badge>
               <h1 className="text-sm sm:text-lg md:text-2xl lg:text-3xl font-bold text-gray-900 mb-1.5">{translatedProductName}</h1>
               
               <div className="flex items-center gap-1 md:gap-3 mb-1.5 md:mb-3 flex-wrap">
@@ -503,7 +526,7 @@ export default function ProductDetailPage() {
                   <div className="pt-2 space-y-1.5 text-[10px]">
                     <div className="flex justify-between py-1">
                       <span className="font-medium text-gray-700">Catégorie</span>
-                      <span className="text-gray-900">{product.category}</span>
+                      <span className="text-gray-900">{getCategoryName(product.category)}</span>
                     </div>
                     <div className="flex justify-between py-1">
                       <span className="font-medium text-gray-700">Disponibilité</span>
@@ -614,7 +637,7 @@ export default function ProductDetailPage() {
                 <div className="space-y-3">
                   <div className="flex justify-between py-2 border-b text-sm">
                     <span className="font-semibold text-gray-700">Catégorie</span>
-                    <span className="text-gray-900">{product.category}</span>
+                    <span className="text-gray-900">{getCategoryName(product.category)}</span>
                   </div>
                   <div className="flex justify-between py-2 border-b text-sm">
                     <span className="font-semibold text-gray-700">Disponibilité</span>

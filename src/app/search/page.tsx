@@ -17,6 +17,7 @@ import { Header } from "@/components/header"
 import { ShippingBanner } from "@/components/shipping-banner"
 import { Footer } from "@/components/footer"
 import { WhatsAppChat } from "@/components/whatsapp-chat"
+import { getValidImageUrl } from "@/lib/image-validation"
 
 export default function SearchPage() {
   const searchParams = useSearchParams()
@@ -349,7 +350,7 @@ export default function SearchPage() {
                       {product.image ? (
                         <div className="relative aspect-square mb-4 overflow-hidden rounded-md">
                           <Image
-                            src={product.image}
+                            src={getValidImageUrl(product.image)}
                             alt={product.name}
                             fill
                             className="object-cover group-hover:scale-105 transition-transform"
@@ -413,7 +414,7 @@ export default function SearchPage() {
                     {product.image ? (
                       <div className="relative aspect-square mb-4 overflow-hidden rounded-md">
                         <Image
-                          src={product.image}
+                          src={getValidImageUrl(product.image)}
                           alt={product.name}
                           fill
                           className="object-cover group-hover:scale-105 transition-transform"

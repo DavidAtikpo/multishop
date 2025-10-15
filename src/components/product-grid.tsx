@@ -36,7 +36,9 @@ interface Product {
 interface Category {
   id: string
   name: string
-  count: number
+  description?: string
+  image?: string
+  count?: number
 }
 
 export function ProductGrid() {
@@ -49,7 +51,29 @@ export function ProductGrid() {
 
   useEffect(() => {
     fetchProducts()
+    fetchCategories()
   }, [selectedCategory, language])
+
+  useEffect(() => {
+    fetchCategories()
+  }, [])
+
+  const fetchCategories = async () => {
+    try {
+      const response = await fetch('/api/categories')
+      if (response.ok) {
+        const categoriesData = await response.json()
+        // Traduire les catégories
+        const translatedCategories = categoriesData.map((category: any) => 
+          translateCategoryObject(category, language)
+        )
+        setCategories(translatedCategories)
+      }
+    } catch (error) {
+      console.error("Erreur lors du chargement des catégories:", error)
+    }
+  }
+
 
   const fetchProducts = async () => {
     try {
@@ -66,14 +90,6 @@ export function ProductGrid() {
         // Utiliser les produits directement (la traduction se fera dans ProductCard)
         const products = data.products || []
         setProducts(products)
-        
-        // Traduire les catégories
-        if (data.categories) {
-          const translatedCategories = data.categories.map((category: Category) => 
-            translateCategoryObject(category, language)
-          )
-          setCategories(translatedCategories)
-        }
       } else {
         throw new Error('Erreur lors du chargement des produits')
       }
@@ -83,6 +99,12 @@ export function ProductGrid() {
     } finally {
       setLoading(false)
     }
+  }
+
+  // Fonction pour obtenir le nom de la catégorie
+  const getCategoryName = (categoryId: string) => {
+    const category = categories.find(c => c.id === categoryId)
+    return category ? category.name : categoryId
   }
 
   if (error) {
@@ -120,7 +142,7 @@ export function ProductGrid() {
               size="sm"
               className="text-xs md:text-sm h-6 md:h-9 px-2 md:px-4"
             >
-              {category.name} ({category.count})
+              {category.name}
             </Button>
           ))}
         </div>

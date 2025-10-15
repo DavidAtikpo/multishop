@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -11,12 +11,27 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
-import { ArrowLeft, Plus, Upload, X } from "lucide-react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { ArrowLeft, Plus, Upload, X, FolderPlus, CheckCircle } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
+
+interface Category {
+  id: string
+  name: string
+  description?: string
+  image?: string
+}
 
 export default function AddProductPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [categories, setCategories] = useState<Category[]>([])
+  const [selectedCategory, setSelectedCategory] = useState<string>("")
+  const [showCreateCategory, setShowCreateCategory] = useState(false)
+  const [newCategory, setNewCategory] = useState({ name: "", description: "", image: "" })
+  const [creatingCategory, setCreatingCategory] = useState(false)
+  const [lastAddedProduct, setLastAddedProduct] = useState<string | null>(null)
+  
   const [productForm, setProductForm] = useState({
     name: "",
     description: "",
@@ -35,8 +50,40 @@ export default function AddProductPage() {
   const [images, setImages] = useState<string[]>([])
   const [uploadingImage, setUploadingImage] = useState(false)
 
+  // Charger les catégories au montage du composant
+  useEffect(() => {
+    fetchCategories()
+  }, [])
+
+  // Mettre à jour la catégorie du formulaire quand la catégorie sélectionnée change
+  useEffect(() => {
+    setProductForm(prev => ({ ...prev, category: selectedCategory }))
+  }, [selectedCategory])
+
+  const fetchCategories = async () => {
+    try {
+      const response = await fetch('/api/categories')
+      if (response.ok) {
+        const data = await response.json()
+        setCategories(data)
+      }
+    } catch (error) {
+      console.error('Error fetching categories:', error)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    if (!selectedCategory) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez sélectionner une catégorie",
+        variant: "destructive",
+      })
+      return
+    }
+
     setLoading(true)
 
     try {
@@ -59,11 +106,33 @@ export default function AddProductPage() {
       })
 
       if (response.ok) {
+        const result = await response.json()
+        setLastAddedProduct(productForm.name)
+        
         toast({
           title: "Succès",
-          description: "Produit ajouté avec succès",
+          description: `Produit "${productForm.name}" ajouté avec succès`,
         })
-        router.push("/vendor/dashboard")
+        
+        // Réinitialiser le formulaire mais garder la catégorie sélectionnée
+        setProductForm({
+          name: "",
+          description: "",
+          price: "",
+          image: "",
+          category: selectedCategory,
+          inStock: true,
+          tags: "",
+          weight: "",
+          dimensions: "",
+          brand: "",
+          sku: "",
+          quantity: "",
+        })
+        setImages([])
+        
+        // Effacer le message de succès après 3 secondes
+        setTimeout(() => setLastAddedProduct(null), 3000)
       } else {
         throw new Error("Erreur lors de l'ajout du produit")
       }
@@ -75,6 +144,52 @@ export default function AddProductPage() {
       })
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleCreateCategory = async () => {
+    if (!newCategory.name.trim()) {
+      toast({
+        title: "Erreur",
+        description: "Le nom de la catégorie est requis",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setCreatingCategory(true)
+    try {
+      const response = await fetch('/api/categories', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newCategory),
+      })
+
+      if (response.ok) {
+        const category = await response.json()
+        setCategories(prev => [...prev, category])
+        setSelectedCategory(category.id)
+        setNewCategory({ name: "", description: "", image: "" })
+        setShowCreateCategory(false)
+        
+        toast({
+          title: "Succès",
+          description: `Catégorie "${category.name}" créée avec succès`,
+        })
+      } else {
+        const error = await response.json()
+        throw new Error(error.error || "Erreur lors de la création")
+      }
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de créer la catégorie",
+        variant: "destructive",
+      })
+    } finally {
+      setCreatingCategory(false)
     }
   }
 
@@ -152,15 +267,114 @@ export default function AddProductPage() {
           Retour
         </Button>
         <div>
-          <h1 className="text-3xl font-bold">Ajouter un nouveau produit</h1>
-          <p className="text-muted-foreground">Remplissez tous les détails de votre produit</p>
+          <h1 className="text-3xl font-bold">Ajouter des produits</h1>
+          <p className="text-muted-foreground">
+            {selectedCategory 
+              ? `Catégorie sélectionnée: ${categories.find(c => c.id === selectedCategory)?.name}`
+              : "Sélectionnez d'abord une catégorie pour commencer"
+            }
+          </p>
         </div>
       </div>
+
+      {/* Message de succès */}
+      {lastAddedProduct && (
+        <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-3">
+          <CheckCircle className="h-5 w-5 text-green-600" />
+          <div>
+            <p className="font-medium text-green-800">Produit ajouté avec succès !</p>
+            <p className="text-sm text-green-600">"{lastAddedProduct}" a été ajouté à la catégorie {categories.find(c => c.id === selectedCategory)?.name}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Sélection de catégorie */}
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FolderPlus className="h-5 w-5" />
+            Sélection de catégorie
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex gap-4 items-end">
+            <div className="flex-1">
+              <Label htmlFor="category-select">Catégorie *</Label>
+              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionner une catégorie" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((category) => (
+                    <SelectItem key={category.id} value={category.id}>
+                      <div className="flex items-center gap-2">
+                        {category.image && <span>{category.image}</span>}
+                        <span>{category.name}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Dialog open={showCreateCategory} onOpenChange={setShowCreateCategory}>
+              <DialogTrigger asChild>
+                <Button variant="outline" type="button">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Nouvelle catégorie
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Créer une nouvelle catégorie</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="new-category-name">Nom de la catégorie *</Label>
+                    <Input
+                      id="new-category-name"
+                      value={newCategory.name}
+                      onChange={(e) => setNewCategory(prev => ({ ...prev, name: e.target.value }))}
+                      placeholder="Ex: Électronique, Vêtements..."
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="new-category-description">Description</Label>
+                    <Textarea
+                      id="new-category-description"
+                      value={newCategory.description}
+                      onChange={(e) => setNewCategory(prev => ({ ...prev, description: e.target.value }))}
+                      placeholder="Description de la catégorie..."
+                      rows={3}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="new-category-image">Image (URL ou emoji)</Label>
+                    <Input
+                      id="new-category-image"
+                      value={newCategory.image}
+                      onChange={(e) => setNewCategory(prev => ({ ...prev, image: e.target.value }))}
+                      placeholder="📱, 👕, 🏠 ou URL d'image..."
+                    />
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <Button variant="outline" onClick={() => setShowCreateCategory(false)}>
+                      Annuler
+                    </Button>
+                    <Button onClick={handleCreateCategory} disabled={creatingCategory}>
+                      {creatingCategory ? "Création..." : "Créer"}
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </CardContent>
+      </Card>
 
       <form onSubmit={handleSubmit} className="space-y-8">
         <div className="grid gap-8 md:grid-cols-2">
           {/* Informations de base */}
-          <Card>
+          <Card className={!selectedCategory ? "opacity-50 pointer-events-none" : ""}>
             <CardHeader>
               <CardTitle>Informations de base</CardTitle>
             </CardHeader>
@@ -173,6 +387,7 @@ export default function AddProductPage() {
                   onChange={(e) => setProductForm({ ...productForm, name: e.target.value })}
                   placeholder="Ex: iPhone 15 Pro Max"
                   required
+                  disabled={!selectedCategory}
                 />
               </div>
 
@@ -184,6 +399,7 @@ export default function AddProductPage() {
                   onChange={(e) => setProductForm({ ...productForm, description: e.target.value })}
                   placeholder="Décrivez votre produit en détail..."
                   rows={4}
+                  disabled={!selectedCategory}
                 />
               </div>
 
@@ -198,6 +414,7 @@ export default function AddProductPage() {
                     onChange={(e) => setProductForm({ ...productForm, price: e.target.value })}
                     placeholder="99.99"
                     required
+                    disabled={!selectedCategory}
                   />
                 </div>
                 <div>
@@ -208,36 +425,9 @@ export default function AddProductPage() {
                     value={productForm.quantity}
                     onChange={(e) => setProductForm({ ...productForm, quantity: e.target.value })}
                     placeholder="100"
+                    disabled={!selectedCategory}
                   />
                 </div>
-              </div>
-
-              <div>
-                <Label htmlFor="category">Catégorie *</Label>
-                <Select
-                  value={productForm.category}
-                  onValueChange={(value) => setProductForm({ ...productForm, category: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner une catégorie" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="electronics">Électronique</SelectItem>
-                    <SelectItem value="clothing">Vêtements</SelectItem>
-                    <SelectItem value="home">Maison & Jardin</SelectItem>
-                    <SelectItem value="food">Alimentaire</SelectItem>
-                    <SelectItem value="household">Maison & Energie/Chauffage</SelectItem>
-                    <SelectItem value="sports">Sports & Loisirs</SelectItem>
-                    <SelectItem value="books">Livres</SelectItem>
-                    <SelectItem value="wood">Bois</SelectItem>
-                    <SelectItem value="bikes">Mobilité & Transport</SelectItem>
-                    <SelectItem value="bags">Sacs</SelectItem>
-                    <SelectItem value="computers">Ordinateurs</SelectItem>
-                    <SelectItem value="phones">Smartphones</SelectItem>
-                    <SelectItem value="automotive">Automobile</SelectItem>
-                    <SelectItem value="toys">Jouets</SelectItem>
-                  </SelectContent>
-                </Select>
               </div>
 
               <div className="flex items-center space-x-2">
@@ -245,6 +435,7 @@ export default function AddProductPage() {
                   id="inStock"
                   checked={productForm.inStock}
                   onCheckedChange={(checked) => setProductForm({ ...productForm, inStock: checked })}
+                  disabled={!selectedCategory}
                 />
                 <Label htmlFor="inStock">Produit en stock</Label>
               </div>
@@ -252,7 +443,7 @@ export default function AddProductPage() {
           </Card>
 
           {/* Détails supplémentaires */}
-          <Card>
+          <Card className={!selectedCategory ? "opacity-50 pointer-events-none" : ""}>
             <CardHeader>
               <CardTitle>Détails supplémentaires</CardTitle>
             </CardHeader>
@@ -264,6 +455,7 @@ export default function AddProductPage() {
                   value={productForm.brand}
                   onChange={(e) => setProductForm({ ...productForm, brand: e.target.value })}
                   placeholder="Ex: Apple, Samsung, Nike..."
+                  disabled={!selectedCategory}
                 />
               </div>
 
@@ -274,6 +466,7 @@ export default function AddProductPage() {
                   value={productForm.sku}
                   onChange={(e) => setProductForm({ ...productForm, sku: e.target.value })}
                   placeholder="Ex: IPH15PM-256-BLU"
+                  disabled={!selectedCategory}
                 />
               </div>
 
@@ -286,6 +479,7 @@ export default function AddProductPage() {
                   value={productForm.weight}
                   onChange={(e) => setProductForm({ ...productForm, weight: e.target.value })}
                   placeholder="0.5"
+                  disabled={!selectedCategory}
                 />
               </div>
 
@@ -296,6 +490,7 @@ export default function AddProductPage() {
                   value={productForm.dimensions}
                   onChange={(e) => setProductForm({ ...productForm, dimensions: e.target.value })}
                   placeholder="15 x 7 x 0.8"
+                  disabled={!selectedCategory}
                 />
               </div>
 
@@ -306,6 +501,7 @@ export default function AddProductPage() {
                   value={productForm.tags}
                   onChange={(e) => setProductForm({ ...productForm, tags: e.target.value })}
                   placeholder="smartphone, apple, 5g, premium"
+                  disabled={!selectedCategory}
                 />
               </div>
             </CardContent>
@@ -313,7 +509,7 @@ export default function AddProductPage() {
         </div>
 
         {/* Images */}
-        <Card>
+        <Card className={!selectedCategory ? "opacity-50 pointer-events-none" : ""}>
           <CardHeader>
             <CardTitle>Images du produit</CardTitle>
           </CardHeader>
@@ -338,7 +534,7 @@ export default function AddProductPage() {
                     className="sr-only"
                     accept="image/*"
                     onChange={handleFileUpload}
-                    disabled={uploadingImage}
+                    disabled={uploadingImage || !selectedCategory}
                   />
                 </div>
                 {uploadingImage && (
@@ -359,8 +555,14 @@ export default function AddProductPage() {
                 onChange={(e) => setProductForm({ ...productForm, image: e.target.value })}
                 placeholder="Ou collez l'URL d'une image"
                 className="flex-1"
+                disabled={!selectedCategory}
               />
-              <Button type="button" onClick={addImage} variant="outline" disabled={!productForm.image.trim()}>
+              <Button 
+                type="button" 
+                onClick={addImage} 
+                variant="outline" 
+                disabled={!productForm.image.trim() || !selectedCategory}
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 Ajouter URL
               </Button>
@@ -382,6 +584,7 @@ export default function AddProductPage() {
                       size="sm"
                       className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
                       onClick={() => removeImage(index)}
+                      disabled={!selectedCategory}
                     >
                       <X className="h-4 w-4" />
                     </Button>
@@ -393,13 +596,20 @@ export default function AddProductPage() {
         </Card>
 
         {/* Actions */}
-        <div className="flex justify-end gap-4">
+        <div className="flex justify-between gap-4">
           <Button type="button" variant="outline" onClick={() => router.back()}>
-            Annuler
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Retour au dashboard
           </Button>
-          <Button type="submit" disabled={loading}>
-            {loading ? "Ajout en cours..." : "Ajouter le produit"}
-          </Button>
+          <div className="flex gap-4">
+            <Button 
+              type="submit" 
+              disabled={loading || !selectedCategory}
+              className="min-w-[200px]"
+            >
+              {loading ? "Ajout en cours..." : "Ajouter le produit"}
+            </Button>
+          </div>
         </div>
       </form>
     </div>

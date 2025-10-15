@@ -8,11 +8,23 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get("limit") || "12")
     const category = searchParams.get("category")
     const search = searchParams.get("search")
+    const minPrice = searchParams.get("minPrice")
+    const maxPrice = searchParams.get("maxPrice")
+    const brands = searchParams.get("brands")
+    const inStock = searchParams.get("inStock")
+    const sortBy = searchParams.get("sortBy") || "newest"
 
     const skip = (page - 1) * limit
 
-    const whereConditions: any = {
-      inStock: true, // Only show products in stock on public page
+    const whereConditions: any = {}
+
+    // Filtre de stock (par défaut true pour la page publique)
+    if (inStock === "true") {
+      whereConditions.inStock = true
+    } else if (inStock === "false") {
+      whereConditions.inStock = false
+    } else {
+      whereConditions.inStock = true // Par défaut, seulement les produits en stock
     }
 
     if (category && category !== "all") {
@@ -27,10 +39,50 @@ export async function GET(request: NextRequest) {
       ]
     }
 
+    // Filtres de prix
+    if (minPrice || maxPrice) {
+      whereConditions.price = {}
+      if (minPrice) whereConditions.price.gte = parseFloat(minPrice)
+      if (maxPrice) whereConditions.price.lte = parseFloat(maxPrice)
+    }
+
+    // Filtre par marques
+    if (brands) {
+      const brandList = brands.split(',').map(b => b.trim()).filter(Boolean)
+      if (brandList.length > 0) {
+        whereConditions.brand = { in: brandList }
+      }
+    }
+
+    // Configuration du tri
+    let orderBy: any = { createdAt: "desc" } // Par défaut
+    switch (sortBy) {
+      case "oldest":
+        orderBy = { createdAt: "asc" }
+        break
+      case "price-low":
+        orderBy = { price: "asc" }
+        break
+      case "price-high":
+        orderBy = { price: "desc" }
+        break
+      case "name-asc":
+        orderBy = { name: "asc" }
+        break
+      case "name-desc":
+        orderBy = { name: "desc" }
+        break
+      case "rating":
+        orderBy = { rating: "desc" }
+        break
+      default:
+        orderBy = { createdAt: "desc" }
+    }
+
     const [products, totalCount] = await Promise.all([
       prisma.product.findMany({
         where: whereConditions,
-        orderBy: { createdAt: "desc" },
+        orderBy,
         skip,
         take: limit,
         select: {

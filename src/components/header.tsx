@@ -54,7 +54,7 @@ export function Header() {
   const [isListening, setIsListening] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
-  const [cats, setCats] = useState<{ id: string; name?: string; icon?: string }[]>([])
+  const [cats, setCats] = useState<{ id: string; name: string; description?: string; image?: string }[]>([])
 
   useEffect(() => {
     (async () => {
@@ -214,6 +214,13 @@ export function Header() {
           <NavigationMenu className="hidden lg:flex ml-6 z-50">
             <NavigationMenuList>
               <NavigationMenuItem>
+                <Link href="/products">
+                  <Button variant="ghost" className="bg-transparent hover:bg-accent">
+                    {t("products")}
+                  </Button>
+                </Link>
+              </NavigationMenuItem>
+              <NavigationMenuItem>
                 <NavigationMenuTrigger className="bg-transparent hover:bg-accent">
                   {t("categories")}
                 </NavigationMenuTrigger>
@@ -225,8 +232,8 @@ export function Header() {
                         href={`/search?category=${encodeURIComponent(category.id)}`}
                         className="flex items-center space-x-2 rounded-md p-2 hover:bg-accent cursor-pointer transition-colors"
                       >
-                        {category.icon && <span className="text-lg">{category.icon}</span>}
-                        <span className="font-medium text-sm">{category.name || t(category.id as any)}</span>
+                        {category.image && <span className="text-lg">📁</span>}
+                        <span className="font-medium text-sm">{category.name}</span>
                       </Link>
                     ))}
                   </div>
@@ -352,6 +359,18 @@ export function Header() {
         {isMenuOpen && (
           <div className="md:hidden border-t py-4">
             <div className="space-y-4 px-4">
+              {/* Mobile Products Link */}
+              <div className="space-y-2">
+                <Link
+                  href="/products"
+                  className="flex items-center space-x-2 rounded-md p-2 hover:bg-accent cursor-pointer transition-colors"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <span className="text-lg">🛍️</span>
+                  <span className="text-sm font-medium">{t("products")}</span>
+                </Link>
+              </div>
+              
               {/* Mobile Categories */}
               <div className="space-y-2">
                 <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
@@ -365,8 +384,8 @@ export function Header() {
                       className="flex items-center space-x-2 rounded-md p-2 hover:bg-accent cursor-pointer transition-colors"
                       onClick={() => setIsMenuOpen(false)}
                     >
-                      {category.icon && <span className="text-lg">{category.icon}</span>}
-                      <span className="text-sm">{category.name || t(category.id as any)}</span>
+                      {category.image && <span className="text-lg">📁</span>}
+                      <span className="text-sm">{category.name}</span>
                     </Link>
                   ))}
                 </div>
